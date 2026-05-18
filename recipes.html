@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anna's Recipe Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#f5f0eb;--taupe:#8a7d6b;--taupe-dark:#6b5e4e;
+  --text:#2c2416;--text-light:#6b5e4e;--card-bg:#faf7f3;
+  --border:#e2d9ce;--note-bg:#ede8e0;--tag-bg:#e8e1d8;
+  --green:#5a7a5a;--red:#9a4a4a;--gold:#c9a84c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* ── HEADER ── */
+.home-header{background:var(--cream);padding:44px 20px 24px;text-align:center;border-bottom:1px solid var(--border);}
+.home-header h1{font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:500;letter-spacing:.01em;line-height:1.2;}
+.home-header p{color:var(--text-light);font-size:.8rem;font-weight:300;margin-top:5px;letter-spacing:.09em;text-transform:uppercase;}
+.header-actions{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.search-bar{max-width:480px;margin:14px auto 0;padding:0 20px;}
+.search-bar input{width:100%;padding:10px 18px;border:1px solid var(--border);border-radius:40px;background:var(--card-bg);font-family:'Jost',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color .2s;}
+.search-bar input::placeholder{color:var(--text-light);}
+.search-bar input:focus{border-color:var(--taupe);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:40px;border:1px solid var(--border);background:var(--card-bg);font-family:'Jost',sans-serif;font-size:.8rem;color:var(--text-light);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn:hover{border-color:var(--taupe);color:var(--taupe);}
+.btn-primary{background:var(--taupe);color:#fff;border-color:var(--taupe);}
+.btn-primary:hover{background:var(--taupe-dark);border-color:var(--taupe-dark);color:#fff;}
+.btn-sm{padding:6px 12px;font-size:.76rem;}
+
+/* ── FILTER TABS ── */
+.filter-tabs{display:flex;gap:7px;padding:18px 16px 0;overflow-x:auto;scrollbar-width:none;max-width:700px;margin:0 auto;}
+.filter-tabs::-webkit-scrollbar{display:none;}
+.filter-tab{flex-shrink:0;padding:6px 14px;border-radius:40px;border:1px solid var(--border);background:var(--card-bg);font-family:'Jost',sans-serif;font-size:.76rem;color:var(--text-light);cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+.filter-tab.active,.filter-tab:hover{background:var(--taupe);color:#fff;border-color:var(--taupe);}
+.filter-tab.fav-tab.active{background:var(--gold);border-color:var(--gold);}
+
+/* ── GRID ── */
+.section-label{font-size:.68rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-light);padding:22px 20px 8px;max-width:700px;margin:0 auto;}
+.recipe-grid{display:grid;gap:9px;padding:0 14px;max-width:700px;margin:0 auto 80px;}
+
+.recipe-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;overflow:hidden;display:flex;align-items:stretch;}
+.recipe-card:hover{border-color:var(--taupe);transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,0,0,.07);}
+.card-photo{width:86px;flex-shrink:0;background:var(--border);object-fit:cover;}
+.card-photo-placeholder{width:86px;flex-shrink:0;background:var(--note-bg);display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.card-content{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:500;color:var(--text);line-height:1.3;flex:1;}
+.card-fav{font-size:1.1rem;flex-shrink:0;line-height:1;cursor:pointer;padding:2px;transition:transform .2s;}
+.card-fav:hover{transform:scale(1.2);}
+.card-meta{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;align-items:center;}
+.card-tag{background:var(--tag-bg);color:var(--text-light);border-radius:20px;padding:2px 9px;font-size:.7rem;}
+.card-tag.new{background:#e8f0e8;color:var(--green);}
+.card-stars{display:flex;gap:2px;margin-left:2px;}
+.card-star{font-size:.75rem;color:var(--gold);}
+.no-results{text-align:center;padding:40px 20px;color:var(--text-light);font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;}
+
+/* ── DETAIL ── */
+.detail-hero{position:relative;width:100%;max-height:280px;overflow:hidden;background:var(--taupe-dark);}
+.detail-hero img{width:100%;max-height:280px;object-fit:cover;display:block;}
+.detail-hero-emoji{width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:4rem;background:var(--taupe-dark);}
+.detail-header{background:var(--taupe-dark);padding:18px 20px 22px;color:#fff;}
+.back-btn{background:none;border:none;color:rgba(255,255,255,.85);font-family:'Jost',sans-serif;font-size:.83rem;cursor:pointer;display:flex;align-items:center;gap:5px;margin-bottom:12px;padding:0;}
+.back-btn:hover{color:#fff;}
+.detail-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.detail-title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:500;line-height:1.2;color:#fff;flex:1;}
+.detail-fav-btn{background:none;border:none;font-size:1.6rem;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;transition:transform .2s;}
+.detail-fav-btn:hover{transform:scale(1.15);}
+.detail-time{font-size:.78rem;font-weight:300;letter-spacing:.1em;color:rgba(255,255,255,.7);margin-top:5px;text-transform:uppercase;}
+.detail-rating{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.rating-label{font-size:.76rem;color:rgba(255,255,255,.6);letter-spacing:.06em;}
+.star-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;padding:2px;line-height:1;transition:transform .15s;color:rgba(255,255,255,.3);}
+.star-btn.lit{color:var(--gold);}
+.star-btn:hover{transform:scale(1.2);}
+.detail-tags{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;}
+.detail-tag{background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border-radius:20px;padding:3px 11px;font-size:.73rem;}
+.detail-action-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px;}
+.detail-action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 13px;border-radius:40px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);font-family:'Jost',sans-serif;font-size:.76rem;color:rgba(255,255,255,.9);cursor:pointer;transition:all .2s;}
+.detail-action-btn:hover{background:rgba(255,255,255,.22);}
+.detail-action-btn.danger{border-color:rgba(255,100,100,.4);color:rgba(255,180,180,.9);}
+.detail-action-btn.danger:hover{background:rgba(180,50,50,.3);}
+.detail-body{padding:0 14px 80px;max-width:700px;margin:0 auto;}
+.detail-description{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:12px 0;line-height:1.7;color:var(--text-light);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:1.03rem;}
+.source-link{display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:0 0 10px;font-size:.85rem;color:var(--taupe);text-decoration:none;transition:border-color .2s;}
+.source-link:hover{border-color:var(--taupe);}
+.section-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;}
+.section-card-title{font-family:'Cormorant Garamond',serif;font-size:1.03rem;font-weight:500;padding:14px 20px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+.ingredients-list{padding:4px 20px 14px;}
+.ingredient-item{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem;line-height:1.5;color:var(--text);}
+.ingredient-item:last-child{border-bottom:none;}
+.ing-dot{width:6px;height:6px;border-radius:50%;background:var(--taupe);flex-shrink:0;margin-top:6px;}
+.steps-list{padding:4px 20px 14px;}
+.step-item{display:flex;align-items:flex-start;gap:13px;padding:11px 0;border-bottom:1px solid var(--border);font-size:.88rem;line-height:1.65;color:var(--text);}
+.step-item:last-child{border-bottom:none;}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--taupe);color:#fff;font-size:.75rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.note-box{background:var(--note-bg);border-radius:14px;padding:14px 18px;margin-bottom:10px;font-size:.86rem;line-height:1.6;color:var(--text-light);}
+.note-box strong{color:var(--text);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(44,36,22,.45);z-index:100;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+@media(min-width:600px){.modal-overlay{align-items:center;padding:20px;}}
+.modal{background:var(--cream);border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;padding:26px 22px 38px;animation:slideUp .25s ease;}
+@media(min-width:600px){.modal{border-radius:20px;}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:500;margin-bottom:5px;}
+.modal-subtitle{color:var(--text-light);font-size:.83rem;margin-bottom:20px;line-height:1.5;}
+.modal-close{float:right;background:none;border:none;font-size:1.4rem;color:var(--text-light);cursor:pointer;line-height:1;margin-top:-2px;}
+
+/* ── FORM ── */
+.form-label{font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:5px;display:block;}
+.form-group{margin-bottom:16px;}
+textarea,input[type=text],input[type=url],select{width:100%;padding:11px 15px;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);font-family:'Jost',sans-serif;font-size:.88rem;color:var(--text);outline:none;transition:border-color .2s;resize:vertical;}
+textarea:focus,input[type=text]:focus,input[type=url]:focus{border-color:var(--taupe);}
+textarea{min-height:130px;}
+.form-hint{font-size:.74rem;color:var(--text-light);margin-top:4px;line-height:1.4;}
+
+/* ── IMPORT TABS ── */
+.import-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:18px;}
+.import-tab{flex:1;padding:10px;border:none;background:var(--card-bg);font-family:'Jost',sans-serif;font-size:.8rem;color:var(--text-light);cursor:pointer;transition:all .2s;letter-spacing:.03em;}
+.import-tab.active{background:var(--taupe);color:#fff;}
+.import-pane{display:none;}.import-pane.active{display:block;}
+
+/* ── PHOTO UPLOAD ── */
+.photo-drop{border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--card-bg);}
+.photo-drop:hover,.photo-drop.over{border-color:var(--taupe);background:var(--note-bg);}
+.photo-drop p{color:var(--text-light);font-size:.85rem;margin-top:6px;}
+.photo-drop span{font-size:1.8rem;}
+.photo-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-top:10px;display:none;}
+.photo-preview.visible{display:block;}
+#photoFileInput{display:none;}
+
+/* ── AI LOADER ── */
+.ai-result{display:none;margin-top:16px;}.ai-result.visible{display:block;}
+.ai-preview{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:13px;}
+.ai-preview-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:500;margin-bottom:8px;}
+.ai-preview-section{font-size:.74rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin:10px 0 5px;}
+.ai-preview-item{font-size:.86rem;color:var(--text);padding:3px 0;border-bottom:1px solid var(--border);}
+.ai-preview-item:last-child{border-bottom:none;}
+.loading-msg{display:flex;align-items:center;gap:10px;padding:16px;background:var(--card-bg);border-radius:12px;font-size:.88rem;color:var(--text-light);border:1px solid var(--border);}
+.dots{display:inline-flex;gap:4px;align-items:center;}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--taupe);animation:pulse 1.2s ease-in-out infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}.dots span:nth-child(3){animation-delay:.4s;}
+@keyframes pulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+/* ── SHARE ── */
+.share-link-box{display:flex;gap:8px;align-items:center;}
+.share-link-box input{flex:1;font-size:.8rem;}
+.share-mode-info{background:var(--note-bg);border-radius:10px;padding:13px 15px;margin-bottom:16px;font-size:.83rem;color:var(--text-light);line-height:1.5;}
+.share-mode-info strong{color:var(--text);}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* ── VIEW-ONLY BANNER ── */
+.view-only-banner{background:var(--taupe);color:#fff;text-align:center;padding:9px 20px;font-size:.78rem;letter-spacing:.07em;}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:26px;right:18px;width:52px;height:52px;border-radius:50%;background:var(--taupe);color:#fff;border:none;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:40;}
+.fab:hover{background:var(--taupe-dark);transform:scale(1.06);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--taupe-dark);color:#fff;padding:11px 20px;border-radius:40px;font-size:.83rem;z-index:200;transition:transform .3s;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── EDIT MODAL ── */
+.edit-row{display:flex;gap:10px;align-items:flex-start;}
+.edit-row .form-group{flex:1;margin-bottom:0;}
+.tag-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.tag-chip{padding:6px 13px;border-radius:40px;border:1px solid var(--border);background:var(--card-bg);font-family:'Jost',sans-serif;font-size:.76rem;color:var(--text-light);cursor:pointer;transition:all .2s;user-select:none;}
+.tag-chip.selected{background:var(--taupe);color:#fff;border-color:var(--taupe);}
+.custom-tag-row{display:flex;gap:8px;margin-top:8px;}
+.custom-tag-row input{flex:1;padding:8px 12px;font-size:.82rem;}
+.dynamic-list{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.dynamic-item{display:flex;gap:7px;align-items:flex-start;}
+.dynamic-item input,.dynamic-item textarea{flex:1;padding:9px 12px;font-size:.86rem;min-height:unset;resize:none;}
+.dynamic-item textarea{min-height:60px;}
+.del-btn{width:30px;height:30px;flex-shrink:0;border-radius:50%;border:1px solid var(--border);background:var(--card-bg);color:var(--text-light);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:4px;transition:all .2s;}
+.del-btn:hover{background:var(--red);border-color:var(--red);color:#fff;}
+.add-item-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:40px;border:1px dashed var(--border);background:transparent;font-family:'Jost',sans-serif;font-size:.78rem;color:var(--text-light);cursor:pointer;margin-top:4px;transition:all .2s;}
+.add-item-btn:hover{border-color:var(--taupe);color:var(--taupe);}
+.edit-photo-row{display:flex;gap:10px;align-items:center;padding:12px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;}
+.edit-photo-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--note-bg);}
+.edit-photo-thumb-placeholder{width:52px;height:52px;border-radius:8px;background:var(--note-bg);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
+
+/* ── PRINT ── */
+@media print{
+  body *{visibility:hidden!important;}
+  #printArea,#printArea *{visibility:visible!important;}
+  #printArea{position:fixed;inset:0;background:#fff;padding:30px 40px;font-family:'Jost',sans-serif;}
+  .pr-title{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:500;margin-bottom:3px;}
+  .pr-meta{color:#888;font-size:.82rem;margin-bottom:14px;}
+  .pr-desc{font-style:italic;color:#666;margin-bottom:16px;font-size:.92rem;border-left:3px solid #c8b89a;padding-left:12px;}
+  .pr-sec{font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:#999;margin:14px 0 7px;}
+  .pr-ing{padding:4px 0;border-bottom:1px solid #eee;font-size:.88rem;}
+  .pr-step{display:flex;gap:11px;padding:7px 0;border-bottom:1px solid #eee;font-size:.88rem;}
+  .pr-num{width:21px;height:21px;border-radius:50%;background:#8a7d6b;color:#fff;font-size:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .pr-note{margin-top:12px;background:#f5f0eb;padding:11px 14px;border-radius:8px;font-size:.83rem;color:#777;}
+  .pr-img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-bottom:16px;}
+}
+</style>
+</head>
+<body>
+
+<div id="printArea" style="display:none"></div>
+<div class="toast" id="toast"></div>
+<div class="view-only-banner" id="viewBanner" style="display:none">👁 View-only mode — Anna's Recipe Collection</div>
+
+<!-- ══ HOME ══ -->
+<div id="homeScreen" class="screen active">
+  <div class="home-header">
+    <h1>Anna's Recipes</h1>
+    <p>Nourishing food for slow living</p>
+    <div class="header-actions" id="headerActions">
+      <button class="btn" onclick="openShareModal()">🔗 Share</button>
+      <button class="btn btn-primary" onclick="openImportModal()">＋ Add recipe</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search recipes…" oninput="filterRecipes()">
+    </div>
+  </div>
+  <div class="filter-tabs" id="filterTabsEl">
+    <button class="filter-tab active" onclick="setFilter('All',this)">All</button>
+    <button class="filter-tab fav-tab" onclick="setFilter('Favourites',this)">⭐ Favourites</button>
+    <button class="filter-tab" onclick="setFilter('Breakfast',this)">Breakfast</button>
+    <button class="filter-tab" onclick="setFilter('Lunch',this)">Lunch</button>
+    <button class="filter-tab" onclick="setFilter('Dinner',this)">Dinner</button>
+    <button class="filter-tab" onclick="setFilter('Snack',this)">Snacks</button>
+    <button class="filter-tab" onclick="setFilter('Sweet',this)">Sweet</button>
+    <button class="filter-tab" onclick="setFilter('Drink',this)">Drinks</button>
+    <button class="filter-tab" onclick="setFilter('BBQ',this)">BBQ</button>
+    <button class="filter-tab" onclick="setFilter('Healthy',this)">Healthy</button>
+  </div>
+  <div class="section-label" id="sectionLabel">All Recipes</div>
+  <div class="recipe-grid" id="recipeGrid"></div>
+  <button class="fab" id="fab" onclick="openImportModal()" title="Add recipe">＋</button>
+</div>
+
+<!-- ══ DETAIL ══ -->
+<div id="detailScreen" class="screen">
+  <div id="detailHero"></div>
+  <div class="detail-header" id="detailHeader"></div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- ══ IMPORT MODAL ══ -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('importModal')">×</button>
+    <div class="modal-title">Add a Recipe</div>
+    <div class="modal-subtitle">Paste text, a URL, or upload a photo — AI formats everything beautifully.</div>
+
+    <div class="import-tabs">
+      <button class="import-tab active" onclick="switchImportTab('text',this)">📝 Paste text</button>
+      <button class="import-tab" onclick="switchImportTab('url',this)">🔗 From URL</button>
+      <button class="import-tab" onclick="switchImportTab('photo',this)">📷 Photo</button>
+    </div>
+
+    <!-- TEXT PANE -->
+    <div class="import-pane active" id="paneText">
+      <div class="form-group">
+        <label class="form-label">Paste your recipe</label>
+        <textarea id="importText" placeholder="Any format, any language — messy notes, WhatsApp, Russian… AI will tidy it instantly 🇷🇺"></textarea>
+        <div class="form-hint">Bullet points, numbered lists, freeform — all work.</div>
+      </div>
+    </div>
+
+    <!-- URL PANE -->
+    <div class="import-pane" id="paneUrl">
+      <div class="form-group">
+        <label class="form-label">Recipe URL</label>
+        <input type="url" id="importUrl" placeholder="https://...">
+        <div class="form-hint">Paste a link to any recipe page — AI will extract and format the recipe.</div>
+      </div>
+    </div>
+
+    <!-- PHOTO PANE -->
+    <div class="import-pane" id="panePhoto">
+      <div class="form-group">
+        <label class="form-label">Upload a photo of the recipe</label>
+        <div class="photo-drop" id="photoDropImport" onclick="document.getElementById('photoFileImport').click()" ondragover="ev.preventDefault();this.classList.add('over')" ondrop="handleImportPhotoDrop(event)">
+          <span>📸</span>
+          <p>Tap to upload or drag a photo<br><small style="font-size:.72rem;opacity:.7">Screenshot, handwritten note, cookbook page — AI reads them all</small></p>
+        </div>
+        <img id="photoPreviewImport" class="photo-preview" alt="preview">
+        <input type="file" id="photoFileImport" accept="image/*" onchange="handleImportPhotoSelect(this)">
+      </div>
+    </div>
+
+    <!-- optional photo for text/url imports -->
+    <div id="extraPhotoSection" style="margin-bottom:16px;">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Add a photo to this recipe <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <div class="photo-drop" id="photoDropExtra" onclick="document.getElementById('photoFileExtra').click()" style="padding:14px 20px;display:flex;align-items:center;gap:12px;text-align:left;">
+          <span style="font-size:1.4rem">📷</span>
+          <p style="margin:0;font-size:.83rem;">Tap to add a photo of the finished dish</p>
+        </div>
+        <img id="photoPreviewExtra" class="photo-preview" alt="extra preview">
+        <input type="file" id="photoFileExtra" accept="image/*" onchange="handleExtraPhotoSelect(this)">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="importBtn" onclick="runAIImport()" style="width:100%;justify-content:center;padding:12px;">✨ Format with AI</button>
+    <div id="importLoading" style="display:none;margin-top:14px;">
+      <div class="loading-msg"><div class="dots"><span></span><span></span><span></span></div><span id="loadingMsg">Reading your recipe…</span></div>
+    </div>
+
+    <div class="ai-result" id="aiResult">
+      <div class="ai-preview" id="aiPreview"></div>
+      <div style="display:flex;gap:9px;">
+        <button class="btn" onclick="resetImport()" style="flex:1;justify-content:center;">← Try again</button>
+        <button class="btn btn-primary" onclick="saveImportedRecipe()" style="flex:2;justify-content:center;">✓ Save recipe</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SHARE MODAL ══ -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('shareModal')">×</button>
+    <div class="modal-title">Share & Export</div>
+    <div class="share-mode-info">
+      <strong>👁 View-only link for collaborators</strong><br>
+      Share with family, friends or anyone who wants to browse. They see everything but cannot add, edit or delete.
+    </div>
+    <div class="form-group">
+      <label class="form-label">View-only link</label>
+      <div class="share-link-box">
+        <input type="text" id="viewOnlyLink" readonly>
+        <button class="btn btn-primary btn-sm" onclick="copyViewLink()">Copy</button>
+      </div>
+      <div class="form-hint">No login needed — just send the link.</div>
+    </div>
+    <hr class="divider">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;margin-bottom:5px;">Backup & Restore</div>
+    <div style="color:var(--text-light);font-size:.83rem;margin-bottom:14px;line-height:1.5;">Save all your added recipes, edits, ratings and favourites to a file. Restore anytime — safe across app updates.</div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:0;">
+      <button class="btn" onclick="backupData()" style="flex:1;justify-content:center;">💾 Download backup</button>
+      <button class="btn" onclick="document.getElementById('restoreFile').click()" style="flex:1;justify-content:center;">📂 Restore backup</button>
+    </div>
+    <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(this)">
+    <hr class="divider">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;margin-bottom:5px;">Export a Recipe</div>
+    <div style="color:var(--text-light);font-size:.83rem;margin-bottom:14px;">Print to PDF or copy as plain text.</div>
+    <div class="form-group">
+      <label class="form-label">Choose recipe</label>
+      <select id="exportSelect"></select>
+    </div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;">
+      <button class="btn" onclick="exportText()" style="flex:1;justify-content:center;">📋 Copy as text</button>
+      <button class="btn btn-primary" onclick="printRecipe()" style="flex:1;justify-content:center;">🖨 Print / PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeModal('editModal')">×</button>
+    <div class="modal-title">Edit Recipe</div>
+    <div class="modal-subtitle" id="editModalSubtitle"></div>
+
+    <!-- Emoji + Title -->
+    <div class="edit-row" style="margin-bottom:16px;">
+      <div class="form-group" style="flex:0 0 72px;">
+        <label class="form-label">Emoji</label>
+        <input type="text" id="editEmoji" maxlength="2" style="text-align:center;font-size:1.4rem;padding:8px 4px;">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Title</label>
+        <input type="text" id="editTitle">
+      </div>
+    </div>
+
+    <!-- Time -->
+    <div class="form-group">
+      <label class="form-label">Time & Serves</label>
+      <input type="text" id="editTime" placeholder="e.g. 25 MIN · SERVES 4">
+    </div>
+
+    <!-- Categories -->
+    <div class="form-group">
+      <label class="form-label">Categories <span style="text-transform:none;letter-spacing:0;font-weight:300">(tap to toggle)</span></label>
+      <div class="tag-grid" id="editTagGrid"></div>
+      <div class="custom-tag-row">
+        <input type="text" id="editCustomTag" placeholder="Add custom tag…" style="padding:7px 12px;font-size:.8rem;">
+        <button class="btn btn-sm" onclick="addCustomTag()">Add</button>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea id="editDescription" style="min-height:80px;" placeholder="A short, warm description of the dish…"></textarea>
+    </div>
+
+    <!-- Photo -->
+    <div class="form-group">
+      <label class="form-label">Photo <span style="text-transform:none;letter-spacing:0;font-weight:300">(optional)</span></label>
+      <div class="edit-photo-row">
+        <div id="editPhotoThumb"></div>
+        <div style="flex:1">
+          <button class="btn btn-sm" onclick="document.getElementById('editPhotoFile').click()" style="margin-bottom:6px;">📷 Change photo</button>
+          <br><button class="btn btn-sm" id="editPhotoRemoveBtn" onclick="removeEditPhoto()" style="display:none;">✕ Remove photo</button>
+        </div>
+      </div>
+      <input type="file" id="editPhotoFile" accept="image/*" style="display:none" onchange="handleEditPhotoSelect(this)">
+    </div>
+
+    <!-- Ingredients -->
+    <div class="form-group">
+      <label class="form-label">Ingredients</label>
+      <div class="dynamic-list" id="editIngredientsList"></div>
+      <button class="add-item-btn" onclick="addIngredientRow()">＋ Add ingredient</button>
+    </div>
+
+    <!-- Steps -->
+    <div class="form-group">
+      <label class="form-label">Method / Steps</label>
+      <div class="dynamic-list" id="editStepsList"></div>
+      <button class="add-item-btn" onclick="addStepRow()">＋ Add step</button>
+    </div>
+
+    <!-- Note -->
+    <div class="form-group">
+      <label class="form-label">Note <span style="text-transform:none;letter-spacing:0;font-weight:300">(optional)</span></label>
+      <textarea id="editNote" style="min-height:60px;" placeholder="Storage tips, serving suggestions…"></textarea>
+    </div>
+
+    <div style="display:flex;gap:9px;margin-top:4px;">
+      <button class="btn" onclick="closeModal('editModal')" style="flex:1;justify-content:center;">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()" style="flex:2;justify-content:center;">✓ Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM ══ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title" style="font-size:1.2rem;">Delete this recipe?</div>
+    <div class="modal-subtitle" id="deleteSubtitle">This cannot be undone.</div>
+    <div style="display:flex;gap:9px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('deleteModal')" style="flex:1;justify-content:center;">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmDelete()" style="flex:1;justify-content:center;background:var(--red);border-color:var(--red);">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════ MODE ═══════════════════════
+const params = new URLSearchParams(location.search);
+const VIEW_ONLY = params.get('view') === '1';
+if (VIEW_ONLY) {
+  document.getElementById('viewBanner').style.display = 'block';
+  document.getElementById('headerActions').style.display = 'none';
+  document.getElementById('fab').style.display = 'none';
+}
+
+// ═══════════════════════ DATA ═══════════════════════
+const BUILTIN = [
+  {id:1,emoji:"🫐",title:"Blueberry Cottage Cheese Muffins",time:"25 MIN · SERVES 12",tags:["Breakfast","Healthy","High protein"],description:"Simple, protein-packed muffins — a great way to start the morning without the sugar crash.",ingredients:["Blueberries (generous handful)","1 cup cottage cheese","2 eggs","1 cup almond flour"],steps:["Preheat oven to 180°C.","Mix all ingredients together until combined.","Spoon into lined muffin tins.","Bake for 20 minutes until golden."],note:null},
+  {id:2,emoji:"🥞",title:"Apple Pancakes",time:"20 MIN · SERVES 2",tags:["Breakfast","Healthy"],description:"Naturally sweetened by apple and cinnamon — no refined sugar, no guilt.",ingredients:["2 apples, grated","2 eggs","150g yogurt","1 cup oats","Cinnamon to taste","1 tsp baking powder"],steps:["Grate the apples and squeeze out excess moisture.","Combine all ingredients in a bowl and mix well.","Cook spoonfuls on a medium pan with a little oil until golden each side."],note:null},
+  {id:3,emoji:"🧇",title:"Beetroot Waffles",time:"20 MIN · SERVES 4",tags:["Breakfast","Healthy"],description:"Gorgeous pink waffles with a delicate flavour — kids love the colour.",ingredients:["60g raw beetroot","150g apple","2 small eggs","85ml coconut milk","40g buckwheat flour","30g chickpea flour (or 40g GF flour)","Pinch of salt","½ tsp cinnamon","Vanilla to taste"],steps:["Finely grate the beetroot and apple.","Add salt, coconut milk and eggs — mix well.","Add flour and mix to a batter consistency.","Cook in a preheated waffle iron for 5–7 minutes."],note:null},
+  {id:4,emoji:"🍫",title:"Chocolate Oat Muffins",time:"25 MIN · SERVES 12",tags:["Breakfast","Healthy","Sweet"],description:"Secretly healthy — the kids will never know.",ingredients:["1.5 cups oats","2 ripe bananas","1 egg","¼ cup cocoa powder","¼ cup milk","1 tsp baking powder"],steps:["Mash the bananas well.","Mix all ingredients together until smooth.","Spoon into muffin tins and bake at 180°C for 20–22 minutes."],note:null},
+  {id:5,emoji:"🥚",title:"Syrniki (Tvorog Pancakes)",time:"20 MIN · SERVES 2",tags:["Breakfast"],description:"A classic Russian breakfast — soft, golden and comforting.",ingredients:["250g tvorog (quark/cottage cheese)","1 egg","2 tbsp flour","1 tbsp sugar"],steps:["Mix all ingredients together well.","Shape into small patties with floured hands.","Fry in a little butter on medium heat until golden on both sides."],note:null},
+  {id:6,emoji:"🥞",title:"Kefir Pancakes",time:"20 MIN · SERVES 4",tags:["Breakfast"],description:"Light, fluffy and traditional — a weekend staple.",ingredients:["500ml kefir","2 tsp sugar","1 egg","½ tsp salt","350g flour","½ tsp baking soda"],steps:["Mix kefir, sugar, egg and salt together.","Mix flour and baking soda separately.","Combine wet and dry; rest 15 minutes.","Cook on medium heat until bubbles form, flip once."],note:null},
+  {id:7,emoji:"🍓",title:"Banana & Strawberry Pancakes",time:"15 MIN · SERVES 1",tags:["Breakfast","Healthy"],description:"3-ingredient pancakes for the busy morning.",ingredients:["1 banana","2 strawberries","30g oat flour","1 small egg"],steps:["Mash banana and blend with egg.","Mix in oat flour and chopped strawberries.","Cook small rounds on medium heat."],note:null},
+  {id:8,emoji:"🧀",title:"Tvorog Zapekanka",time:"50 MIN · SERVES 6",tags:["Breakfast","Healthy"],description:"Russian baked cheesecake — creamy inside, golden on top. Perfect make-ahead breakfast.",ingredients:["1kg tvorog (9%+ fat)","300g smetana (15–20%)","2 eggs","2 tbsp sugar","3 tbsp semolina","10g butter for greasing","Vanilla, raisins optional"],steps:["Mix all ingredients until smooth.","Pour into a buttered tin.","Bake at 180°C for 40–50 minutes until golden.","Cool slightly before slicing."],note:null},
+  {id:9,emoji:"🌿",title:"Golden Turmeric Oats",time:"10 MIN · SERVES 2",tags:["Breakfast","Healthy","Anti-inflammatory"],description:"A deeply nourishing start built to support hormone balance and reduce inflammation. Turmeric and cinnamon stabilise blood sugar throughout the morning.",ingredients:["100g rolled oats","400ml oat milk or full-fat coconut milk","1 tsp ground turmeric","½ tsp ground cinnamon","½ tsp fresh or ground ginger","Pinch of black pepper","1 tbsp honey or maple syrup","2 tbsp mixed seeds: pumpkin, sunflower, flax","Handful of fresh or frozen berries"],steps:["Combine oats and milk in a saucepan over medium-low heat.","Stir in turmeric, cinnamon, ginger and black pepper.","Cook for 5–7 minutes, stirring, until thick and creamy.","Remove from heat and stir in sweetener.","Top with seeds and berries. Serve immediately."],note:null},
+  {id:10,emoji:"🍋",title:"Banana Lemon Ginger Smoothie",time:"5 MIN · SERVES 1",tags:["Breakfast","Drink","Healthy"],description:"The perfect energising breakfast or snack.",ingredients:["1 banana","1 cup almond milk","1 tbsp lemon juice","½ tsp grated fresh ginger","¼ tsp turmeric","1 tbsp honey or maple syrup (optional)"],steps:["Add all ingredients to a blender.","Blend until completely smooth.","Pour and drink immediately."],note:null},
+  {id:11,emoji:"🥗",title:"Green Goddess Nourish Bowl",time:"20 MIN · SERVES 4",tags:["Lunch","Healthy","Iron-rich"],description:"Iron-rich greens, slow-release carbohydrates and healthy fats. The tahini dressing provides calcium, zinc and essential fatty acids.",ingredients:["200g quinoa, rinsed and cooked","2 handfuls baby spinach or kale","1 ripe avocado, sliced","200g edamame","1 cucumber, peeled into ribbons","4 eggs, soft-boiled (7 minutes)","Dressing: 4 tbsp tahini, 2 tbsp lemon juice, 1 tbsp olive oil, 1 garlic clove","Salt, pepper, sesame seeds to finish"],steps:["Cook quinoa per packet. Set aside to cool.","Whisk dressing with 2–3 tbsp water until smooth. Season.","Wilt kale briefly if using; leave spinach raw.","Divide quinoa between bowls and top with greens, avocado, edamame, cucumber.","Halve eggs and place alongside. Drizzle dressing. Finish with sesame seeds."],note:"Make double the dressing — keeps for 5 days refrigerated."},
+  {id:12,emoji:"🍜",title:"Noodle Soup Jar",time:"10 MIN · SERVES 1",tags:["Lunch","Quick"],description:"The ideal desk lunch — prep once, just add hot water.",ingredients:["Bouillon cube","1 tsp miso paste","1 tsp chili crunch oil","1 tsp coconut aminos","Sriracha to taste","1 garlic clove, minced","Sliced bell pepper, cabbage, carrot","Edamame and silken tofu","Sliced green onions","Rice vermicelli noodles"],steps:["Layer miso, bouillon, chili oil, aminos, sriracha and garlic in a 16oz jar.","Add vegetables and tofu.","Top with spring onions and rice noodles.","Fill with boiling water, seal and wait 3 minutes. Shake gently."],note:null},
+  {id:13,emoji:"🐟",title:"Tuna Fish Mousse",time:"10 MIN · SERVES 4",tags:["Lunch","Healthy","High protein"],description:"Creamy, light and ready in minutes — brilliant on crackers or with crudités.",ingredients:["300g tuna, drained and flaked","120g mayonnaise","1 tsp fresh lemon juice","Spring onions, fresh dill","Capers, celery or radish (optional)"],steps:["Put mayo, lemon juice, spring onions and dill in a large bowl.","Combine well, then add tuna.","Blend smooth with a food processor or immersion blender.","Season and serve with crackers."],note:null},
+  {id:14,emoji:"🥕",title:"Carrot Ribbon Salad",time:"15 MIN · SERVES 4",tags:["Lunch","Healthy","BBQ"],description:"Fresh, crunchy and full of sesame flavour — goes with everything.",ingredients:["6 carrots","1 tbsp sesame oil","2 tbsp soy sauce","2 tbsp rice vinegar","2 tbsp agave or honey","2 tbsp lime juice","3 garlic cloves, grated","2 tbsp sesame seeds","1 tbsp cilantro + green onion"],steps:["Peel carrots into ribbons using a vegetable peeler.","Whisk together all dressing ingredients.","Toss carrots in dressing and sprinkle with sesame seeds.","Top with cilantro and green onion."],note:null},
+  {id:15,emoji:"🫙",title:"Liver Pâté",time:"25 MIN · SERVES 6",tags:["Lunch","Healthy"],description:"A deeply nourishing classic — rich in iron and flavour.",ingredients:["200g chicken or beef liver","1 onion, chopped","100g carrot","Butter and olive oil","Splash of red wine vinegar","2 garlic cloves","Thyme"],steps:["Cook onions in butter and olive oil until soft.","Add carrot, vinegar, garlic and thyme — cook 2 more minutes.","Add liver and extra butter — cook for 10 minutes.","Cool completely, then blend until smooth."],note:null},
+  {id:16,emoji:"🍵",title:"Restorative Miso Broth",time:"15 MIN · SERVES 4",tags:["Lunch","Healthy","Gut health"],description:"Rich in probiotics and minerals — supports gut lining, reduces cortisol and provides gentle, warming energy. Made quickly, drunk slowly.",ingredients:["1.2 litres vegetable or chicken stock","3 tbsp white miso paste","200g silken tofu, cubed","2 handfuls baby spinach","3 spring onions, finely sliced","1 tsp sesame oil, 1 tsp fresh grated ginger","Tamari, sesame seeds, nori strips to finish"],steps:["Heat stock to just below simmering — do not boil.","Whisk miso into a ladleful of warm stock until dissolved, stir back in.","Add tofu and ginger. Warm gently for 2 minutes.","Remove from heat and add spinach to wilt.","Stir in sesame oil and tamari. Top with spring onions, nori and sesame seeds."],note:"Never boil miso — high heat destroys the beneficial probiotics."},
+  {id:17,emoji:"🥬",title:"Red Lentils with Spinach",time:"30 MIN · SERVES 4",tags:["Dinner","Healthy","Vegetarian"],description:"Hearty, warming and deeply nourishing — a weeknight hero.",ingredients:["4 garlic cloves, minced","1 yellow onion, finely diced","¼ cup sun-dried tomatoes, chopped","2 cups cherry tomatoes","1 tbsp Italian seasoning","1½ tbsp tomato paste","1 tbsp coconut aminos","2½ cups water","1 can full-fat coconut milk","1½ cups red lentils","3 tbsp nutritional yeast","2 cups baby spinach","1 tbsp lemon juice","¼ cup flat leaf parsley"],steps:["Sauté garlic and onion until soft.","Add Italian seasoning and tomato paste.","Add coconut aminos, tomatoes, coconut milk, water and lentils.","Boil, then simmer 20 minutes until lentils are soft.","Stir in spinach until wilted. Finish with lemon juice."],note:null},
+  {id:18,emoji:"🍗",title:"Mango Chicken",time:"25 MIN · SERVES 4",tags:["Dinner","Quick"],description:"Sweet, creamy and ready in under 30 minutes.",ingredients:["Diced chicken breast or thigh","1 stock cube","Mango chutney (generous spoonfuls)","Fresh mango, cubed","Double cream"],steps:["Part-cook diced chicken in a pan.","Add stock cube and mango chutney.","Add fresh mango chunks. Simmer 10 minutes.","Stir in cream and heat gently. Serve with rice."],note:null},
+  {id:19,emoji:"🥩",title:"Meat & Ham Roll",time:"1 HR 30 MIN · SERVES 6",tags:["Dinner"],description:"A slow-cooked roll that fills the house with the best smell.",ingredients:["450g mince","200g smoked ham, finely chopped","1 onion, finely chopped","1 egg","1 cup breadcrumbs","Black pepper"],steps:["Mix all ingredients together well.","Shape into a firm roll.","Steam 1.5 hours or bake at 160°C fan for 1 hour.","Rest 10 minutes before slicing."],note:null},
+  {id:20,emoji:"🍲",title:"Saffron & Coconut Poached Chicken",time:"45 MIN · SERVES 4",tags:["Dinner","Healthy","Nourishing"],description:"Saffron-poached chicken in a golden broth — a simple way to support mood, the nervous system and your energy.",ingredients:["4–6 chicken thighs","1 onion, finely chopped","2 garlic cloves, minced","1 thumb ginger, grated","1 tsp turmeric","1 tin coconut milk","2 cups chicken broth","Generous pinch saffron (soaked in 2 tbsp warm water)","1 sweet potato, cubed","2 handfuls spinach or kale","1 tbsp olive oil or ghee","Sea salt, black pepper, squeeze of lemon"],steps:["Soak the saffron in warm water and set aside.","Heat oil in a pot. Add onion and cook until golden.","Add garlic, ginger and turmeric — cook 1–2 minutes.","Pour in coconut milk, broth, and saffron with its soaking water.","Add the sweet potato and bring to a gentle simmer.","Add the chicken into the broth. Cover and cook gently 25–30 minutes.","Stir through the greens at the end. Finish with lemon."],note:"Serve over rice or quinoa, or as a brothy bowl on its own."},
+  {id:21,emoji:"🥣",title:"Solyanka (Russian Meat Soup)",time:"1 HR 30 MIN · SERVES 6",tags:["Dinner"],description:"A rich, smoky, tangy Russian classic — perfect for Sunday.",ingredients:["Beef and chicken (for stock)","Smoked sausage and frankfurters, sliced","1 onion","Pickled cucumber, sliced","Tomato paste","Potatoes (optional)","Olives","Lemon, fresh herbs, smetana to serve"],steps:["Simmer beef and chicken 1–1.5 hours for stock.","Shred meat. Slice smoked sausages.","Cook onion with pickled cucumber and tomato paste.","Add all meats and fry mixture to the stock.","Simmer 20 minutes. Add olives at the end.","Serve with lemon, fresh herbs and sour cream."],note:null},
+  {id:22,emoji:"🐟",title:"Neil's Christmas Haddock",time:"25 MIN · SERVES 4",tags:["Dinner","Special"],description:"A rich, creamy smoked haddock dish — a special occasion favourite.",ingredients:["2 undyed smoked haddock fillets per person","1 big tub double cream","1 medium tub single cream","White pepper","2 tsp English mustard + 1 tsp French mustard","Fresh coriander","1 lemon","Tabasco (optional)","Yorkshire puddings to serve"],steps:["Melt butter in a large pot on low heat. Add haddock.","Add white pepper. Increase heat slightly.","Add ¾ of each cream. Stir gently as it heats.","Once bubbling, reduce heat and stir in mustards.","Serve over Yorkshire puddings with coriander and lemon."],note:"Too thick? Add more cream. Too thin? Let it cook uncovered a little longer."},
+  {id:23,emoji:"🍫",title:"Bounty Bars",time:"30 MIN · SERVES 12",tags:["Snack","Sweet","Healthy"],description:"Homemade, refined-sugar-free and shockingly good.",ingredients:["200g desiccated coconut","Thick part of 1 can coconut milk","2 tbsp chicory root syrup","100% dark chocolate for dunking"],steps:["Mix coconut with coconut milk and syrup until combined.","Shape into bars and freeze 15 minutes.","Melt dark chocolate. Dip each bar and place on parchment.","Refrigerate until set."],note:null},
+  {id:24,emoji:"🍪",title:"Sesame Banana Cookies",time:"25 MIN · SERVES 20",tags:["Snack","Healthy"],description:"3-ingredient cookies with a gorgeous nutty crunch.",ingredients:["200g sesame seeds","1 egg","1 banana","3 tbsp oat flour","Pinch of salt"],steps:["Lightly toast sesame seeds in a dry pan.","Mash banana with egg and salt. Mix well.","Add flour and toasted sesame seeds.","Shape with a fork onto a baking tray.","Bake at 170°C for 15 minutes."],note:null},
+  {id:25,emoji:"🫙",title:"High-Fibre Cranberry Jelly",time:"5 MIN · SERVES 4",tags:["Snack","Healthy"],description:"Gut-friendly and surprisingly satisfying.",ingredients:["300ml unsweetened cranberry juice","2 tbsp psyllium husk","1–2 tbsp chicory root syrup"],steps:["Mix all ingredients together.","Let sit for 5 minutes to thicken — stir again.","Refrigerate until set or eat immediately."],note:null},
+  {id:26,emoji:"⚡",title:"Cottage Cheese Protein Balls",time:"15 MIN · SERVES 15",tags:["Snack","Healthy","High protein"],description:"No-bake, high-protein and dangerously moreish.",ingredients:["1 cup cottage cheese, blended smooth","2 tbsp maple syrup or honey","1½ cups almond flour","¼ cup protein powder","½ cup peanut butter","½ tsp salt","1 cup dark chocolate chips","1 tsp coconut oil"],steps:["Blend cottage cheese until smooth.","Mix with maple syrup, almond flour, protein powder, peanut butter and salt.","Roll into balls and refrigerate 20 minutes.","Melt dark chocolate with coconut oil. Dip balls and chill until set."],note:null},
+  {id:27,emoji:"🟤",title:"Beetroot Brownie",time:"35 MIN · SERVES 16",tags:["Snack","Sweet","Healthy"],description:"Fudgy, chocolatey and secretly full of vegetables.",ingredients:["250g cooked beetroot, blended smooth","100g dark chocolate, melted","3 eggs","80g coconut sugar","60g almond flour","25g cocoa powder","80ml extra virgin olive oil","1 tsp vanilla","½ tsp baking soda","Pinch of salt"],steps:["Blend beetroot until completely smooth.","Whisk eggs and coconut sugar until glossy. Add olive oil.","Whisk in beetroot purée, then melted chocolate.","Stir in cocoa powder, almond flour, baking soda, vanilla and salt.","Bake at 180°C fan for 22–25 minutes — slight wobble in middle is perfect.","Cool, then chill before cutting."],note:"Optional: swirl in tahini or add dark chocolate chips before baking."},
+  {id:28,emoji:"🍡",title:"Pistachio Matcha Energy Bites",time:"15 MIN · SERVES 12",tags:["Snack","Healthy"],description:"Elegant little bites with a white chocolate tahini drizzle.",ingredients:["¾ cup soft dates","½ cup pistachios","¼ cup hemp seeds","1 tbsp cashew or almond butter","1 tsp matcha powder","1 scoop collagen peptides","½ tsp vanilla extract","White chocolate + tahini + pinch of matcha for drizzle"],steps:["Blitz all ingredients (except drizzle) until sticky.","Roll into balls and chill 20 minutes.","Melt white chocolate, stir in tahini and a pinch of matcha.","Dip or drizzle over the chilled balls."],note:null},
+  {id:29,emoji:"🌱",title:"High-Protein Seed Crackers",time:"45 MIN · SERVES 20",tags:["Snack","Healthy"],description:"Crispy, nutritious and keeps for days.",ingredients:["100g watercress (or any greenery)","250ml water","50g chia seeds","120g flaxseed","100g white sesame seeds (lightly toasted)","100g sunflower seeds","2 tsp dried oregano","1 tbsp extra virgin olive oil"],steps:["Blitz watercress and water until smooth.","Toast sesame seeds. Mix all seeds together.","Combine with watercress liquid and leave to absorb 15 minutes.","Spread on a lined tray. Bake at 160°C for 35–40 minutes until crisp."],note:null},
+  {id:30,emoji:"🍫",title:"Chocolate Seed Granola",time:"20 MIN · SERVES 10",tags:["Snack","Breakfast","Healthy"],description:"Rich, crunchy and no refined sugar.",ingredients:["⅓ cup each: pumpkin seeds, sunflower seeds, sesame seeds, pistachios, cashews, slivered almonds, shredded coconut","⅓ cup tahini","¼ cup maple syrup","100g dark chocolate","Flaky salt"],steps:["Mix seeds, nuts and coconut with tahini and maple syrup.","Spread on a tray and bake at 180°C for 15 minutes.","Melt dark chocolate and drizzle over warm granola.","Sprinkle with flaky salt. Cool completely before breaking up."],note:null},
+  {id:31,emoji:"🍫",title:"Salted Chocolate Tahini Energy Bites",time:"15 MIN · SERVES 12",tags:["Snack","Healthy","Energy"],description:"Rich, fudgy bites for when you need a quick, nourishing fix.",ingredients:["1 cup dates (soft, pitted)","½ cup tahini","¼ cup cacao powder","2 tbsp ground flax or chia","2 tbsp hemp seeds","2–3 tbsp water (as needed)","Pinch of sea salt"],steps:["Blend everything in a food processor until a sticky dough forms.","Roll into bite-sized balls.","Chill for 20 minutes before serving."],note:"Optional upgrades: dip in dark chocolate, sprinkle with flaky salt, or add chopped hazelnuts."},
+  {id:32,emoji:"🌾",title:"Seed & Oat Energy Bars",time:"25 MIN · SERVES 12",tags:["Snack","Healthy","No refined sugar"],description:"Dense with slow-release energy — nourishing without the blood sugar spike or crash.",ingredients:["200g rolled oats","80g pumpkin seeds, 60g sunflower seeds, 40g flaxseed","80g desiccated coconut","120g almond butter","100g honey or maple syrup, 60g coconut oil melted","1 tsp vanilla, 1 tsp cinnamon, pinch of sea salt","80g dark chocolate chips (optional)"],steps:["Preheat oven to 180°C / 160°C fan. Line a 20cm tin.","Combine dry ingredients in a large bowl.","Gently warm almond butter, honey and coconut oil. Stir in vanilla.","Pour wet over dry; mix until coated. Press firmly into tin.","Bake 18–20 minutes until golden. Cool completely before cutting."],note:"Keeps for a week in an airtight tin, two weeks refrigerated."},
+  {id:33,emoji:"🫐",title:"Hormone-Supporting Berry Smoothie",time:"5 MIN · SERVES 2",tags:["Drink","Healthy","Hormone support"],description:"Wild blueberries, flaxseed for oestrogen metabolism, and maca for hormonal balance and energy.",ingredients:["200g frozen wild blueberries","1 ripe banana","2 tbsp ground flaxseed","1 tsp maca powder","1 tbsp almond butter","250ml oat or coconut milk","1 tsp raw honey","Optional: handful of spinach, 1 scoop collagen or protein powder"],steps:["Add all ingredients to a blender.","Blend on high for 45 seconds until completely smooth.","Taste and adjust sweetness. Pour and drink immediately."],note:null},
+  {id:34,emoji:"🍵",title:"Adaptogen Night Tea",time:"5 MIN · SERVES 2",tags:["Drink","Calming","Sleep support"],description:"A signal to your nervous system that the day is done. Ashwagandha reduces cortisol, chamomile supports GABA receptors, warm milk provides tryptophan for melatonin.",ingredients:["500ml oat milk or whole milk","1 chamomile tea bag","½ tsp ashwagandha powder","¼ tsp cardamom","¼ tsp cinnamon","1 tsp honey","Pinch of nutmeg"],steps:["Gently warm milk over low heat — do not boil.","Steep chamomile for 3 minutes, remove.","Whisk in ashwagandha, cardamom, cinnamon.","Pour into mugs, stir in honey, finish with nutmeg.","Drink slowly, in quiet, an hour before sleep."],note:null},
+  {id:35,emoji:"🥣",title:"Golden Mineral Broth",time:"60 MIN · SERVES 4",tags:["Drink","Healthy","Anti-inflammatory"],description:"A deeply nourishing, mineral-rich broth that soothes your system.",ingredients:["1 onion (halved)","1 leek (washed well)","2 carrots","1 small sweet potato","1–2 handfuls shiitake mushrooms","Thumb-sized fresh turmeric","Thumb-sized fresh ginger","1 tsp black peppercorns","1 tsp coriander seeds","Strip of kelp (kombu)","1–1.5L water","Pinch of sea salt"],steps:["Roughly chop everything.","Add to a pot with the water.","Bring to a gentle boil, then simmer 45–60 minutes.","Strain and serve warm."],note:"Keeps for 4 days refrigerated — sip warm throughout the week."},
+  {id:36,emoji:"🥕",title:"Healthy Carrot Cake",time:"55 MIN · SERVES 8",tags:["Sweet","Healthy"],description:"A wholesome carrot loaf sweetened with banana — with a cream cheese frosting that feels indulgent.",ingredients:["100g almond flour","50g oat flour","Pinch of salt, cinnamon to taste","½ tsp baking powder, ¼ tsp baking soda","2 ripe bananas, mashed","2 eggs","1 tsp vanilla extract","80g Greek yogurt","60ml coconut oil, melted","1 medium carrot, grated","40g walnuts, chopped","150g cream cheese + 1 tsp vanilla + sweetener — for icing"],steps:["Whisk almond flour, oat flour, salt, cinnamon, baking powder and soda.","Mash bananas with eggs, vanilla, yogurt and coconut oil.","Fold carrot and walnuts into wet mixture.","Combine wet and dry gently until just mixed.","Bake in a loaf tin at 180°C for 40–45 minutes.","Cool completely. Frost with cream cheese mixture. Decorate with nuts."],note:null},
+  {id:37,emoji:"🍌",title:"Banana Loaf",time:"1 HR 10 MIN · SERVES 8",tags:["Sweet"],description:"The classic. The one everyone asks for.",ingredients:["100g softened butter","175g caster sugar","225g self-raising flour","1 tsp baking powder","2 large eggs","2 tbsp milk","2 ripe bananas"],steps:["Mash bananas. Beat with butter, sugar, eggs and milk.","Fold in flour and baking powder.","Pour into a lined loaf tin.","Bake at 180°C / 160°C fan for 1 hour."],note:null},
+  {id:38,emoji:"🍰",title:"Pavlova",time:"2 HR 30 MIN · SERVES 8",tags:["Sweet","Special"],description:"Light as air, crisp outside and marshmallow inside.",ingredients:["4 large egg whites (5 if small)","250g caster sugar","1 tbsp cornflour","1 tsp white vinegar"],steps:["Beat egg whites until stiff peaks form.","Add sugar gradually, beating all the time.","Fold in cornflour and vinegar with the last addition of sugar.","Spread on parchment in a round, higher at the edges.","Bake at 120°C for 2 hours. Leave in oven overnight to cool."],note:null},
+  {id:39,emoji:"🍰",title:"White Chocolate Cheesecake",time:"20 MIN + CHILL · SERVES 8",tags:["Sweet","No bake"],description:"No-bake, elegant and always a crowd-pleaser.",ingredients:["100g digestive biscuits, crushed","50g butter, melted","150g white chocolate","150ml double cream","150ml cream cheese","Fresh raspberries, strawberries or tinned mango to serve"],steps:["Mix crushed biscuits with melted butter. Press into tin. Chill.","Melt white chocolate gently.","Whisk cream to soft peaks. Fold in cream cheese.","Stir melted chocolate through cream mixture.","Spread over biscuit base. Chill at least 3 hours.","Top with fruit to serve."],note:null},
+  {id:40,emoji:"🍋",title:"Iced Lemon Squares",time:"20 MIN · SERVES 16",tags:["Sweet","No bake"],description:"Zingy, coconutty and utterly addictive.",ingredients:["225g margarine","225g white chocolate","2 tbsp syrup","350g Nice biscuits, crushed","100g desiccated coconut","Icing: icing sugar + juice and rind of 1 lemon"],steps:["Melt margarine, chocolate and syrup in a pan.","Stir in crushed biscuits and coconut.","Press firmly into a lined tray.","Make glacé icing with icing sugar and lemon juice. Spread over top.","Sprinkle with extra coconut. Cut into squares when set."],note:null},
+  {id:41,emoji:"🍫",title:"Coconut Chocolate Tray Bake",time:"30 MIN · SERVES 16",tags:["Sweet"],description:"Chocolate, coconut and cherries — a retro classic.",ingredients:["225g chocolate (mix of milk and dark)","1 egg","100g caster sugar","100g desiccated coconut","100g glacé cherries, halved"],steps:["Melt chocolate and pour into a lined Swiss roll tin. Leave to set.","Whisk egg and sugar. Add coconut and cherries.","Spread mixture over set chocolate.","Bake at 180°C for 20 minutes. Cut into squares when cold."],note:null},
+  {id:42,emoji:"🍫",title:"Raisin Bars",time:"15 MIN + SET · SERVES 16",tags:["Sweet","No bake"],description:"Nostalgic, rich and dangerously easy.",ingredients:["225g margarine","225g raisins","225g chocolate","1 tin condensed milk","450g digestive biscuits, crushed"],steps:["Melt margarine and chocolate together.","Add condensed milk and raisins. Stir well.","Add crushed biscuits and mix.","Press into a tin. Refrigerate until set. Cut into bars."],note:null},
+  {id:43,emoji:"🥞",title:"Classic Crepes",time:"20 MIN · SERVES 4",tags:["Sweet","Breakfast"],description:"Thin, golden and endlessly versatile.",ingredients:["1 cup all-purpose flour","2 tbsp sugar","2 tsp baking powder","½ tsp salt","1 egg","1 cup milk","2 tbsp melted butter","1 tsp vanilla (optional)"],steps:["Mix flour, sugar, baking powder and salt.","Beat egg with milk, melted butter and vanilla.","Pour liquid into dry ingredients and stir until smooth.","Cook thin rounds in a lightly buttered pan. Flip when edges lift."],note:null},
+  {id:44,emoji:"🍅",title:"Fresh Salsa",time:"10 MIN · SERVES 6",tags:["BBQ","Healthy"],description:"Bright, zingy and so much better than anything from a jar.",ingredients:["½ onion","2 tbsp pickled jalapeños (with some juice)","1 garlic clove","1 tin chopped tomatoes","Fresh coriander","Lime juice","Sea salt flakes"],steps:["Pulse onion, jalapeños and garlic until very roughly chopped.","Add tomatoes, coriander, lime juice and salt.","Pulse a few more times — keep it chunky.","Taste and adjust seasoning."],note:null},
+  {id:45,emoji:"🥑",title:"Mango Guacamole",time:"10 MIN · SERVES 6",tags:["BBQ","Healthy"],description:"Avocado meets mango — the best guac you've ever had.",ingredients:["2 ripe avocados","½ tsp salt and pepper","½ tsp cumin","1 tsp garlic powder","2 small limes, juiced","½ cup cilantro, finely chopped","½ cup cherry tomatoes, finely chopped","¼ cup red onion, finely chopped","1 small jalapeño, finely chopped","1 yellow mango, finely chopped"],steps:["Mash avocados with salt, pepper, cumin and garlic powder.","Add lime juice and mix.","Fold in cilantro, tomatoes, onion, jalapeño and mango.","Taste and adjust. Serve immediately."],note:null},
+  {id:46,emoji:"🥩",title:"Air Fryer Steak Pouches",time:"30 MIN · SERVES 4",tags:["BBQ","Dinner"],description:"All the satisfaction of a BBQ without leaving the kitchen.",ingredients:["Steak cut to preferred size","Potatoes, par-boiled 5 minutes","1 onion, sliced","Olive oil, parsley, garlic, Italian seasoning","Salt and pepper","Butter cubes"],steps:["Par-boil potatoes 5 minutes. Drain and cool.","Toss steak, potatoes and onion in oil and seasonings.","Divide between 4 foil sheets (12×12 inch). Top with butter. Seal well.","Air fry at 200°C for 20 minutes. Open and broil 1–2 minutes for a char."],note:null},
+  {id:47,emoji:"🌿",title:"Pistachio Pesto with Confit Garlic",time:"10 MIN · SERVES 6",tags:["Dinner","Lunch","Healthy"],description:"A quick way to upgrade any bland plate into something satisfying and nutrient dense.",ingredients:["1 cup shelled pistachios","1 small handful fresh basil","2–3 confit garlic cloves","3–4 tbsp olive oil","Juice of ½ lemon","2–3 tbsp grated parmesan","Sea salt, black pepper"],steps:["Add everything to a food processor.","Blend until smooth or slightly textured.","Taste and adjust seasoning."],note:"Spoon over roasted veg, stir through pasta or grains, on toast with eggs, or dolloped onto fish, chicken or beans."},
+  {id:48,emoji:"🥗",title:"Greek Pasta Salad",time:"20 MIN · SERVES 6",tags:["BBQ","Lunch"],description:"Layered, fresh and perfect to make ahead.",ingredients:["Rotini pasta, cooked","Red onion, thinly sliced","Cucumber, diced","Chickpeas","Cherry tomatoes","Marinated artichoke","Pitted olives","Lettuce","Dressing: red wine vinegar, lemon juice, miso paste, aquafaba, maple syrup, Dijon mustard, dried basil, oregano, garlic powder"],steps:["Make dressing by whisking all dressing ingredients together.","Cook and cool pasta.","Layer pasta, then vegetables in a bowl.","Drizzle dressing over top when serving."],note:null},
+  {id:49,emoji:"🍞",title:"Raw Buckwheat Bread",time:"1 HR 20 MIN · SERVES 10",tags:["Breakfast","Healthy","Gluten-free"],description:"Dense, nourishing and gluten-free — packed with seeds and flavour.",ingredients:["250g green buckwheat","50g chia seeds","100ml warm water","2 eggs","2 tbsp psyllium husk","2 tbsp olive oil or ghee","1 tsp baking powder","Salt, cumin, coriander, dried garlic to taste","Seeds and spices for the top"],steps:["Soak buckwheat and chia seeds for 1 hour. Rinse well.","Blend buckwheat, chia seeds and water until smooth.","Add eggs, oil, salt, baking powder and psyllium. Blend again.","Pour into a loaf tin. Top with seeds and spices.","Bake at 190°C for 1 hour 20 minutes."],note:null},
+  {id:50,emoji:"🌾",title:"Chocolate Chickpea Brownie",time:"50 MIN · SERVES 12",tags:["Sweet","Healthy","Snack"],description:"Nobody will guess the secret ingredient.",ingredients:["1 can chickpeas","1 egg","Generous cocoa powder","1 tsp baking powder","Honey to sweeten"],steps:["Drain and blend chickpeas until smooth.","Mix in egg, cocoa, baking powder and honey.","Pour into a lined tin.","Bake at 180°C for 45 minutes. Cool before cutting."],note:null}
+];
+
+// ── Persistent state ──────────────────────
+let userRecipes = [];
+let ratings = {};    // { id: 1-5 }
+let favourites = {}; // { id: true }
+let extraPhotos = {}; // { id: base64 } for builtin recipes
+let overrides = {};  // { id: partial recipe fields } for builtin edits
+try { userRecipes = JSON.parse(localStorage.getItem('userRecipes') || '[]'); } catch(e){}
+try { ratings = JSON.parse(localStorage.getItem('ratings') || '{}'); } catch(e){}
+try { favourites = JSON.parse(localStorage.getItem('favourites') || '{}'); } catch(e){}
+try { extraPhotos = JSON.parse(localStorage.getItem('extraPhotos') || '{}'); } catch(e){}
+try { overrides = JSON.parse(localStorage.getItem('overrides') || '{}'); } catch(e){}
+
+const all = () => [...BUILTIN.map(r => {
+  const ov = overrides[r.id];
+  return ov ? { ...r, ...ov } : r;
+}), ...userRecipes];
+const saveAll = () => {
+  localStorage.setItem('userRecipes', JSON.stringify(userRecipes));
+  localStorage.setItem('ratings', JSON.stringify(ratings));
+  localStorage.setItem('favourites', JSON.stringify(favourites));
+  localStorage.setItem('extraPhotos', JSON.stringify(extraPhotos));
+  localStorage.setItem('overrides', JSON.stringify(overrides));
+};
+
+// ── Import state ──────────────────────────
+let curFilter = 'All', curSearch = '';
+let pendingImport = null, deleteId = null;
+let importTab = 'text';
+let photoDataImport = null; // base64 for photo-as-recipe
+let photoDataExtra = null;  // base64 for optional dish photo
+
+// ── SCREENS ───────────────────────────────
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+
+// ── FILTER / GRID ─────────────────────────
+function setFilter(f, btn){
+  curFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sectionLabel').textContent = f==='All'?'All Recipes': f==='Favourites'?'⭐ Favourites': f+' Recipes';
+  renderGrid();
+}
+function filterRecipes(){ curSearch = document.getElementById('searchInput').value.toLowerCase(); renderGrid(); }
+
+function getPhoto(r){
+  if (r.photo) return r.photo;
+  if (extraPhotos[r.id]) return extraPhotos[r.id];
+  return null;
+}
+
+function renderGrid(){
+  const grid = document.getElementById('recipeGrid');
+  let list = all().filter(r=>{
+    if (curFilter==='Favourites') return !!favourites[r.id];
+    const mf = curFilter==='All' || r.tags.some(t=>t.toLowerCase().includes(curFilter.toLowerCase()));
+    const ms = !curSearch || r.title.toLowerCase().includes(curSearch) || r.tags.some(t=>t.toLowerCase().includes(curSearch)) || (r.description||'').toLowerCase().includes(curSearch);
+    return mf && ms;
+  });
+  // sort: favourites first within any view, then rated
+  list.sort((a,b)=>{
+    const fa=favourites[a.id]?1:0, fb=favourites[b.id]?1:0;
+    if (fb!==fa) return fb-fa;
+    return (ratings[b.id]||0)-(ratings[a.id]||0);
+  });
+  if (!list.length){ grid.innerHTML='<div class="no-results">No recipes found.</div>'; return; }
+  grid.innerHTML = list.map(r=>{
+    const photo = getPhoto(r);
+    const fav = favourites[r.id];
+    const rating = ratings[r.id]||0;
+    const starsHtml = rating>0 ? `<span class="card-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</span>` : '';
+    const imgHtml = photo
+      ? `<img class="card-photo" src="${photo}" alt="${r.title}" loading="lazy">`
+      : `<div class="card-photo-placeholder">${r.emoji}</div>`;
+    return `<div class="recipe-card" onclick="showRecipe(${r.id})">
+      ${imgHtml}
+      <div class="card-content">
+        <div class="card-top">
+          <div class="card-title">${r.title}</div>
+          <span class="card-fav" onclick="toggleFav(event,${r.id})">${fav?'❤️':'🤍'}</span>
+        </div>
+        <div class="card-meta">
+          ${r.tags.slice(0,2).map(t=>`<span class="card-tag">${t}</span>`).join('')}
+          ${r.userAdded?'<span class="card-tag new">✎ New</span>':''}
+          ${starsHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFav(e, id){
+  e.stopPropagation();
+  favourites[id] = !favourites[id];
+  if (!favourites[id]) delete favourites[id];
+  saveAll(); renderGrid();
+}
+
+// ── DETAIL ────────────────────────────────
+let currentDetailId = null;
+function showRecipe(id){
+  const r = all().find(x=>x.id===id);
+  if (!r) return;
+  currentDetailId = id;
+  showScreen('detailScreen');
+
+  // Hero image
+  const photo = getPhoto(r);
+  const hero = document.getElementById('detailHero');
+  if (photo){
+    hero.innerHTML = `<div class="detail-hero"><img src="${photo}" alt="${r.title}"></div>`;
+  } else {
+    hero.innerHTML = `<div class="detail-hero-emoji">${r.emoji}</div>`;
+  }
+
+  // Rating stars
+  const curRating = ratings[id]||0;
+  const starsHtml = [1,2,3,4,5].map(n=>`<button class="star-btn${n<=curRating?' lit':''}" onclick="setRating(${id},${n})" id="star_${id}_${n}">★</button>`).join('');
+
+  // Fav
+  const isFav = !!favourites[id];
+
+  // Action buttons
+  const actions = !VIEW_ONLY ? `
+    <div class="detail-action-row">
+      <button class="detail-action-btn" onclick="openEditModal(${id})">✏️ Edit</button>
+      <button class="detail-action-btn" onclick="openShareForRecipe(${id})">📤 Export</button>
+      ${r.userAdded?`<button class="detail-action-btn danger" onclick="askDelete(${id})">🗑 Delete</button>`:''}
+    </div>` : '';
+
+  document.getElementById('detailHeader').innerHTML = `
+    <button class="back-btn" onclick="goHome()">← Home</button>
+    <div class="detail-top-row">
+      <div class="detail-title">${r.title}</div>
+      <button class="detail-fav-btn" onclick="toggleFavDetail(${id})" id="detailFavBtn">${isFav?'❤️':'🤍'}</button>
+    </div>
+    <div class="detail-time">${r.time}</div>
+    <div class="detail-rating">
+      <span class="rating-label">RATING</span>
+      ${starsHtml}
+      <span id="ratingClear_${id}" style="font-size:.7rem;color:rgba(255,255,255,.45);cursor:pointer;margin-left:4px;" onclick="clearRating(${id})" ${curRating?'':'style="display:none"'}>clear</span>
+    </div>
+    <div class="detail-tags">${r.tags.map(t=>`<span class="detail-tag">${t}</span>`).join('')}</div>
+    ${actions}`;
+
+  let body = '';
+  if (r.description) body += `<div class="detail-description">${r.description}</div>`;
+  if (r.sourceUrl) body += `<a class="source-link" href="${r.sourceUrl}" target="_blank" rel="noopener">🔗 View original recipe</a>`;
+  body += `
+    <div class="section-card">
+      <div class="section-card-title">Ingredients</div>
+      <div class="ingredients-list">${r.ingredients.map(i=>`<div class="ingredient-item"><div class="ing-dot"></div><div>${i}</div></div>`).join('')}</div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">Method</div>
+      <div class="steps-list">${r.steps.map((s,i)=>`<div class="step-item"><div class="step-num">${i+1}</div><div>${s}</div></div>`).join('')}</div>
+    </div>`;
+  if (r.note) body += `<div class="note-box"><strong>✳ Note:</strong> ${r.note}</div>`;
+  document.getElementById('detailBody').innerHTML = body;
+}
+
+function toggleFavDetail(id){
+  favourites[id] = !favourites[id];
+  if (!favourites[id]) delete favourites[id];
+  saveAll();
+  document.getElementById('detailFavBtn').textContent = favourites[id]?'❤️':'🤍';
+}
+
+function setRating(id, n){
+  ratings[id] = n; saveAll();
+  [1,2,3,4,5].forEach(i=>{
+    const btn = document.getElementById(`star_${id}_${i}`);
+    if (btn) btn.classList.toggle('lit', i<=n);
+  });
+  const clr = document.getElementById(`ratingClear_${id}`);
+  if (clr){ clr.style.display='inline'; }
+  showToast(n===5?'⭐⭐⭐⭐⭐ Perfect!': n>=4?'⭐ Loved it!': n>=3?'👍 Good one': 'Noted!');
+}
+function clearRating(id){
+  delete ratings[id]; saveAll();
+  [1,2,3,4,5].forEach(i=>{ const b=document.getElementById(`star_${id}_${i}`); if(b) b.classList.remove('lit'); });
+  const clr=document.getElementById(`ratingClear_${id}`); if(clr) clr.style.display='none';
+}
+
+function goHome(){ showScreen('homeScreen'); renderGrid(); }
+
+// ── DELETE ────────────────────────────────
+function askDelete(id){
+  const r=all().find(x=>x.id===id); deleteId=id;
+  document.getElementById('deleteSubtitle').textContent=`"${r.title}" will be permanently removed.`;
+  openModal('deleteModal');
+}
+function confirmDelete(){
+  userRecipes=userRecipes.filter(r=>r.id!==deleteId);
+  delete ratings[deleteId]; delete favourites[deleteId]; delete extraPhotos[deleteId];
+  saveAll(); closeModal('deleteModal'); showToast('Recipe deleted'); goHome();
+}
+
+// ── MODALS ────────────────────────────────
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
+
+// ── SHARE ─────────────────────────────────
+function openShareModal(){
+  const base = location.href.split('?')[0];
+  document.getElementById('viewOnlyLink').value = base+'?view=1';
+  const sel = document.getElementById('exportSelect');
+  sel.innerHTML = all().map(r=>`<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('');
+  openModal('shareModal');
+}
+function openShareForRecipe(id){
+  openShareModal();
+  const sel=document.getElementById('exportSelect');
+  for(let i=0;i<sel.options.length;i++) if(parseInt(sel.options[i].value)===id){sel.selectedIndex=i;break;}
+}
+function copyViewLink(){
+  const el=document.getElementById('viewOnlyLink'); el.select();
+  try{document.execCommand('copy');}catch(e){navigator.clipboard.writeText(el.value);}
+  showToast('View-only link copied!');
+}
+function exportText(){
+  const r=all().find(x=>x.id===parseInt(document.getElementById('exportSelect').value)); if(!r) return;
+  const txt=[`${r.emoji} ${r.title}`,r.time,'',r.description||'','','INGREDIENTS',...r.ingredients.map(i=>`• ${i}`),'','METHOD',...r.steps.map((s,i)=>`${i+1}. ${s}`),r.note?`\nNote: ${r.note}`:''].join('\n');
+  try{navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+  showToast('Recipe copied to clipboard!');
+}
+function printRecipe(){
+  const r=all().find(x=>x.id===parseInt(document.getElementById('exportSelect').value)); if(!r) return;
+  const photo=getPhoto(r);
+  const area=document.getElementById('printArea'); area.style.display='block';
+  area.innerHTML=`
+    ${photo?`<img class="pr-img" src="${photo}" alt="${r.title}">`:''}
+    <div class="pr-title">${r.emoji} ${r.title}</div>
+    <div class="pr-meta">${r.time} · ${r.tags.join(', ')}</div>
+    ${r.description?`<div class="pr-desc">${r.description}</div>`:''}
+    <div class="pr-sec">Ingredients</div>${r.ingredients.map(i=>`<div class="pr-ing">• ${i}</div>`).join('')}
+    <div class="pr-sec">Method</div>${r.steps.map((s,i)=>`<div class="pr-step"><div class="pr-num">${i+1}</div><div>${s}</div></div>`).join('')}
+    ${r.note?`<div class="pr-note">✳ Note: ${r.note}</div>`:''}`;
+  closeModal('shareModal');
+  setTimeout(()=>{ window.print(); area.style.display='none'; },200);
+}
+
+// ── IMPORT TABS ───────────────────────────
+function switchImportTab(tab, btn){
+  importTab = tab;
+  document.querySelectorAll('.import-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.import-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  // hide extra photo section when photo tab active (photo IS the recipe)
+  document.getElementById('extraPhotoSection').style.display = tab==='photo' ? 'none' : 'block';
+  resetImportResult();
+}
+
+// ── PHOTO HANDLING ────────────────────────
+function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+async function handleImportPhotoSelect(input){
+  if (!input.files[0]) return;
+  photoDataImport = await toBase64(input.files[0]);
+  const prev=document.getElementById('photoPreviewImport');
+  prev.src=photoDataImport; prev.classList.add('visible');
+}
+function handleImportPhotoDrop(e){
+  e.preventDefault(); document.getElementById('photoDropImport').classList.remove('over');
+  const file=e.dataTransfer.files[0]; if(!file||!file.type.startsWith('image/')) return;
+  const inp=document.getElementById('photoFileImport');
+  const dt=new DataTransfer(); dt.items.add(file); inp.files=dt.files;
+  handleImportPhotoSelect(inp);
+}
+async function handleExtraPhotoSelect(input){
+  if (!input.files[0]) return;
+  photoDataExtra = await toBase64(input.files[0]);
+  const prev=document.getElementById('photoPreviewExtra');
+  prev.src=photoDataExtra; prev.classList.add('visible');
+}
+
+// ── AI IMPORT ─────────────────────────────
+function openImportModal(){ if(VIEW_ONLY) return; resetImport(); openModal('importModal'); }
+function resetImport(){
+  document.getElementById('importText').value='';
+  document.getElementById('importUrl').value='';
+  photoDataImport=null; photoDataExtra=null;
+  const pp=document.getElementById('photoPreviewImport'); pp.src=''; pp.classList.remove('visible');
+  const pe=document.getElementById('photoPreviewExtra'); pe.src=''; pe.classList.remove('visible');
+  document.getElementById('photoFileImport').value='';
+  document.getElementById('photoFileExtra').value='';
+  resetImportResult();
+}
+function resetImportResult(){
+  document.getElementById('aiResult').classList.remove('visible');
+  document.getElementById('importLoading').style.display='none';
+  document.getElementById('importBtn').style.display='block';
+  pendingImport=null;
+}
+
+const RECIPE_PROMPT = (text) => `You are a recipe parser. Convert the following into clean structured JSON with EXACTLY these fields:
+{"emoji":"one relevant food emoji","title":"Recipe Name in English","time":"X MIN · SERVES Y","tags":["1-3 from: Breakfast,Lunch,Dinner,Snack,Sweet,Drink,BBQ,Healthy,Vegetarian,Gluten-free,High protein,Quick,Special,No bake"],"description":"1-2 warm appealing sentences in English","ingredients":["ingredient 1","ingredient 2"],"steps":["Step 1","Step 2"],"note":"storage/serving tip or null"}
+All text in English. ingredients and steps must be arrays. note is string or null. Return ONLY valid JSON, no markdown, no explanation.
+Recipe: ${text}`;
+
+async function runAIImport(){
+  document.getElementById('importBtn').style.display='none';
+  document.getElementById('importLoading').style.display='block';
+  document.getElementById('aiResult').classList.remove('visible');
+
+  try {
+    let messages;
+    if (importTab==='text'){
+      const raw = document.getElementById('importText').value.trim();
+      if(!raw){ showToast('Please paste a recipe first'); resetImportResult(); document.getElementById('importBtn').style.display='block'; return; }
+      document.getElementById('loadingMsg').textContent='Reading your recipe…';
+      messages=[{role:'user',content:RECIPE_PROMPT(raw)}];
+    }
+    else if (importTab==='url'){
+      const url = document.getElementById('importUrl').value.trim();
+      if(!url){ showToast('Please enter a URL'); resetImportResult(); document.getElementById('importBtn').style.display='block'; return; }
+      document.getElementById('loadingMsg').textContent='Fetching recipe from URL…';
+      // Ask Claude to fetch and parse the URL
+      messages=[{role:'user',content:`Please visit this URL and extract the recipe from the page, then convert it to this exact JSON format:
+{"emoji":"food emoji","title":"Recipe Name","time":"X MIN · SERVES Y","tags":["1-3 tags"],"description":"1-2 sentences","ingredients":["item"],"steps":["step"],"note":"tip or null","sourceUrl":"${url}"}
+URL: ${url}
+Return ONLY valid JSON. If you cannot access the URL, make a best guess from the URL text itself.`}];
+    }
+    else if (importTab==='photo'){
+      if(!photoDataImport){ showToast('Please upload a photo first'); resetImportResult(); document.getElementById('importBtn').style.display='block'; return; }
+      document.getElementById('loadingMsg').textContent='Reading recipe from photo…';
+      const base64 = photoDataImport.split(',')[1];
+      const mediaType = photoDataImport.split(';')[0].split(':')[1];
+      messages=[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+        {type:'text',text:`Read this recipe image and convert it to this exact JSON:
+{"emoji":"food emoji","title":"Recipe Name in English","time":"X MIN · SERVES Y","tags":["1-3 tags from: Breakfast,Lunch,Dinner,Snack,Sweet,Drink,BBQ,Healthy,Vegetarian,Gluten-free,High protein,Quick,Special,No bake"],"description":"1-2 warm sentences","ingredients":["ingredient"],"steps":["step"],"note":"tip or null"}
+Translate everything to English. Return ONLY valid JSON.`}
+      ]}];
+    }
+
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages})
+    });
+    const data = await res.json();
+    let text = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    // extract JSON if wrapped in prose
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) text = match[0];
+    pendingImport = JSON.parse(text);
+    // attach photo from photo tab
+    if (importTab==='photo' && photoDataImport) pendingImport._photo = photoDataImport;
+    // attach extra dish photo
+    if (photoDataExtra) pendingImport._photo = photoDataExtra;
+    showAIPreview(pendingImport);
+  } catch(e){
+    console.error(e);
+    document.getElementById('importLoading').style.display='none';
+    document.getElementById('importBtn').style.display='block';
+    showToast('Something went wrong — please try again');
+  }
+}
+
+function showAIPreview(r){
+  document.getElementById('importLoading').style.display='none';
+  const photoHtml = (r._photo||r.photo) ? `<img src="${r._photo||r.photo}" style="width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin-bottom:10px;">` : '';
+  document.getElementById('aiPreview').innerHTML=`
+    ${photoHtml}
+    <div style="font-size:1.5rem;margin-bottom:3px">${r.emoji||'🍽'}</div>
+    <div class="ai-preview-title">${r.title}</div>
+    <div style="font-size:.78rem;color:var(--text-light);margin-bottom:7px">${r.time||''} · ${(r.tags||[]).join(', ')}</div>
+    ${r.description?`<div style="font-size:.86rem;color:var(--text-light);font-style:italic;margin-bottom:9px;line-height:1.5">${r.description}</div>`:''}
+    <div class="ai-preview-section">Ingredients</div>${(r.ingredients||[]).map(i=>`<div class="ai-preview-item">• ${i}</div>`).join('')}
+    <div class="ai-preview-section">Method</div>${(r.steps||[]).map((s,i)=>`<div class="ai-preview-item">${i+1}. ${s}</div>`).join('')}
+    ${r.note?`<div style="margin-top:9px;font-size:.8rem;color:var(--text-light)">✳ ${r.note}</div>`:''}`;
+  document.getElementById('aiResult').classList.add('visible');
+}
+
+function saveImportedRecipe(){
+  if (!pendingImport) return;
+  const recipe = {...pendingImport, id:Date.now(), userAdded:true};
+  // store photo separately to keep recipe object clean in localStorage
+  if (recipe._photo){ recipe.photo=recipe._photo; delete recipe._photo; }
+  userRecipes.push(recipe); saveAll();
+  closeModal('importModal'); showToast(`"${recipe.title}" added!`); renderGrid();
+}
+
+// ── EDIT ──────────────────────────────────
+const ALL_TAGS = ['Breakfast','Lunch','Dinner','Snack','Sweet','Drink','BBQ','Healthy','Vegetarian','Gluten-free','High protein','Quick','Special','No bake','Anti-inflammatory','Gut health','Iron-rich','Hormone support','Calming','Sleep support','Energy','Nourishing','Restorative'];
+let editingId = null;
+let editPhotoData = null; // new photo chosen during edit
+let editPhotoRemoved = false;
+let editSelectedTags = [];
+
+const saveOverrides = () => saveAll();
+
+// Get the effective recipe (builtin merged with any override, or userRecipe)
+function getEffective(id) {
+  return all().find(x => x.id === id);
+}
+
+function openEditModal(id) {
+  if (VIEW_ONLY) return;
+  editingId = id;
+  editPhotoData = null;
+  editPhotoRemoved = false;
+
+  const r = getEffective(id);
+  document.getElementById('editModalSubtitle').textContent = `Editing "${r.title}"`;
+  document.getElementById('editEmoji').value = r.emoji || '';
+  document.getElementById('editTitle').value = r.title || '';
+  document.getElementById('editTime').value = r.time || '';
+  document.getElementById('editDescription').value = r.description || '';
+  document.getElementById('editNote').value = r.note || '';
+  document.getElementById('editPhotoFile').value = '';
+
+  // Photo preview
+  const photo = getPhoto(r);
+  updateEditPhotoThumb(photo);
+
+  // Tags
+  editSelectedTags = [...(r.tags || [])];
+  renderEditTags();
+
+  // Ingredients
+  renderEditIngredients(r.ingredients || []);
+
+  // Steps
+  renderEditSteps(r.steps || []);
+
+  openModal('editModal');
+}
+
+function updateEditPhotoThumb(src) {
+  const thumb = document.getElementById('editPhotoThumb');
+  const removeBtn = document.getElementById('editPhotoRemoveBtn');
+  if (src) {
+    thumb.innerHTML = `<img class="edit-photo-thumb" src="${src}" alt="photo">`;
+    removeBtn.style.display = 'inline-flex';
+  } else {
+    const r = getEffective(editingId);
+    thumb.innerHTML = `<div class="edit-photo-thumb-placeholder">${r ? r.emoji : '🍽'}</div>`;
+    removeBtn.style.display = 'none';
+  }
+}
+
+function handleEditPhotoSelect(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    editPhotoData = reader.result;
+    editPhotoRemoved = false;
+    updateEditPhotoThumb(editPhotoData);
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removeEditPhoto() {
+  editPhotoData = null;
+  editPhotoRemoved = true;
+  updateEditPhotoThumb(null);
+}
+
+function renderEditTags() {
+  const allTagsToShow = [...new Set([...ALL_TAGS, ...editSelectedTags])];
+  document.getElementById('editTagGrid').innerHTML = allTagsToShow.map(t => `
+    <div class="tag-chip${editSelectedTags.includes(t) ? ' selected' : ''}" onclick="toggleEditTag('${t}')">${t}</div>
+  `).join('');
+}
+
+function toggleEditTag(tag) {
+  if (editSelectedTags.includes(tag)) {
+    editSelectedTags = editSelectedTags.filter(t => t !== tag);
+  } else {
+    editSelectedTags.push(tag);
+  }
+  renderEditTags();
+}
+
+function addCustomTag() {
+  const input = document.getElementById('editCustomTag');
+  const val = input.value.trim();
+  if (val && !editSelectedTags.includes(val)) {
+    editSelectedTags.push(val);
+    renderEditTags();
+  }
+  input.value = '';
+}
+
+function renderEditIngredients(list) {
+  document.getElementById('editIngredientsList').innerHTML = list.map((ing, i) => `
+    <div class="dynamic-item" id="ing_row_${i}">
+      <input type="text" value="${escHtml(ing)}" placeholder="Ingredient…" id="ing_${i}">
+      <button class="del-btn" onclick="removeRow('editIngredientsList','ing_row_${i}')">×</button>
+    </div>`).join('');
+}
+
+function addIngredientRow() {
+  const list = document.getElementById('editIngredientsList');
+  const idx = list.children.length;
+  const div = document.createElement('div');
+  div.className = 'dynamic-item';
+  div.id = `ing_row_${idx}`;
+  div.innerHTML = `<input type="text" placeholder="Ingredient…" id="ing_${idx}"><button class="del-btn" onclick="removeRow('editIngredientsList','ing_row_${idx}')">×</button>`;
+  list.appendChild(div);
+  div.querySelector('input').focus();
+}
+
+function renderEditSteps(list) {
+  document.getElementById('editStepsList').innerHTML = list.map((step, i) => `
+    <div class="dynamic-item" id="step_row_${i}">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--taupe);color:#fff;font-size:.72rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:6px;">${i+1}</div>
+      <textarea placeholder="Step…" id="step_${i}" rows="2">${escHtml(step)}</textarea>
+      <button class="del-btn" onclick="removeRow('editStepsList','step_row_${i}')">×</button>
+    </div>`).join('');
+}
+
+function addStepRow() {
+  const list = document.getElementById('editStepsList');
+  const idx = list.children.length;
+  const div = document.createElement('div');
+  div.className = 'dynamic-item';
+  div.id = `step_row_${idx}`;
+  div.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:var(--taupe);color:#fff;font-size:.72rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:6px;">${idx+1}</div><textarea placeholder="Step…" id="step_${idx}" rows="2"></textarea><button class="del-btn" onclick="removeRow('editStepsList','step_row_${idx}')">×</button>`;
+  list.appendChild(div);
+  div.querySelector('textarea').focus();
+}
+
+function removeRow(listId, rowId) {
+  const row = document.getElementById(rowId);
+  if (row) row.remove();
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function collectIngredients() {
+  const list = document.getElementById('editIngredientsList');
+  return Array.from(list.querySelectorAll('input[type=text]'))
+    .map(el => el.value.trim()).filter(Boolean);
+}
+
+function collectSteps() {
+  const list = document.getElementById('editStepsList');
+  return Array.from(list.querySelectorAll('textarea'))
+    .map(el => el.value.trim()).filter(Boolean);
+}
+
+function saveEdit() {
+  const title = document.getElementById('editTitle').value.trim();
+  if (!title) { showToast('Please add a title'); return; }
+  const ingredients = collectIngredients();
+  const steps = collectSteps();
+  if (!ingredients.length) { showToast('Add at least one ingredient'); return; }
+  if (!steps.length) { showToast('Add at least one step'); return; }
+
+  const updated = {
+    emoji: document.getElementById('editEmoji').value.trim() || '🍽',
+    title,
+    time: document.getElementById('editTime').value.trim(),
+    tags: editSelectedTags.length ? editSelectedTags : ['Uncategorised'],
+    description: document.getElementById('editDescription').value.trim() || null,
+    note: document.getElementById('editNote').value.trim() || null,
+    ingredients,
+    steps,
+  };
+
+  // Handle photo
+  const isBuiltin = BUILTIN.some(x => x.id === editingId);
+  if (isBuiltin) {
+    // Store override so builtin data is never mutated
+    const existing = overrides[editingId] || {};
+    if (editPhotoData) {
+      updated.photo = editPhotoData;
+    } else if (editPhotoRemoved) {
+      delete existing.photo;
+      delete extraPhotos[editingId];
+    } else if (existing.photo || extraPhotos[editingId]) {
+      updated.photo = existing.photo || extraPhotos[editingId];
+    }
+    overrides[editingId] = { ...existing, ...updated };
+  } else {
+    // Directly update userRecipe
+    const idx = userRecipes.findIndex(r => r.id === editingId);
+    if (idx > -1) {
+      const existing = userRecipes[idx];
+      if (editPhotoData) {
+        updated.photo = editPhotoData;
+      } else if (editPhotoRemoved) {
+        delete updated.photo;
+      } else {
+        updated.photo = existing.photo;
+      }
+      userRecipes[idx] = { ...existing, ...updated };
+    }
+  }
+
+  saveAll();
+  closeModal('editModal');
+  showToast(`"${title}" updated!`);
+  showRecipe(editingId); // refresh detail view
+  renderGrid();
+}
+
+
+// ── BACKUP & RESTORE ──────────────────────
+function backupData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    userRecipes,
+    ratings,
+    favourites,
+    overrides
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `annas-recipes-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup downloaded!');
+}
+
+function restoreData(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('Invalid backup file');
+      if (data.userRecipes) userRecipes = data.userRecipes;
+      if (data.ratings) Object.assign(ratings, data.ratings);
+      if (data.favourites) Object.assign(favourites, data.favourites);
+      if (data.overrides) Object.assign(overrides, data.overrides);
+      saveAll();
+      renderGrid();
+      closeModal('shareModal');
+      showToast('Backup restored successfully!');
+    } catch(err) {
+      showToast('Could not read backup file — please try again');
+    }
+    input.value = '';
+  };
+  reader.readAsText(input.files[0]);
+}
+
+let toastT;
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ── INIT ──────────────────────────────────
+renderGrid();
+</script>
+</body>
+</html>
