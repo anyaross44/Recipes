@@ -356,6 +356,10 @@ textarea{min-height:130px;}
       <button class="btn" onclick="document.getElementById('restoreFile').click()" style="flex:1;justify-content:center;">📂 Restore backup</button>
     </div>
     <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(this)">
+    <div id="hiddenRecipesSection" style="display:none;margin-top:14px;">
+      <div style="font-size:.76rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);margin-bottom:8px;">Hidden Recipes</div>
+      <div id="hiddenRecipesList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
     <hr class="divider">
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;margin-bottom:5px;">Export a Recipe</div>
     <div style="color:var(--text-light);font-size:.83rem;margin-bottom:14px;">Print to PDF or copy as plain text.</div>
@@ -448,17 +452,20 @@ textarea{min-height:130px;}
       <button class="btn" onclick="closeModal('editModal')" style="flex:1;justify-content:center;">Cancel</button>
       <button class="btn btn-primary" onclick="saveEdit()" style="flex:2;justify-content:center;">✓ Save changes</button>
     </div>
+    <div style="margin-top:10px;text-align:center;">
+      <button class="btn btn-sm" onclick="askDeleteFromEdit()" style="color:var(--red);border-color:transparent;background:none;font-size:.78rem;">🗑 Delete this recipe</button>
+    </div>
   </div>
 </div>
 
-<!-- ══ DELETE CONFIRM ══ -->
+<!-- ══ DELETE / HIDE CONFIRM ══ -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal" style="max-width:380px;">
-    <div class="modal-title" style="font-size:1.2rem;">Delete this recipe?</div>
+    <div class="modal-title" id="deleteModalTitle" style="font-size:1.2rem;">Delete this recipe?</div>
     <div class="modal-subtitle" id="deleteSubtitle">This cannot be undone.</div>
     <div style="display:flex;gap:9px;margin-top:8px;">
       <button class="btn" onclick="closeModal('deleteModal')" style="flex:1;justify-content:center;">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmDelete()" style="flex:1;justify-content:center;background:var(--red);border-color:var(--red);">Delete</button>
+      <button class="btn btn-primary" id="deleteConfirmBtn" style="flex:1;justify-content:center;background:var(--red);border-color:var(--red);">Delete</button>
     </div>
   </div>
 </div>
@@ -529,26 +536,29 @@ const BUILTIN = [
 
 // ── Persistent state ──────────────────────
 let userRecipes = [];
-let ratings = {};    // { id: 1-5 }
-let favourites = {}; // { id: true }
-let extraPhotos = {}; // { id: base64 } for builtin recipes
-let overrides = {};  // { id: partial recipe fields } for builtin edits
+let ratings = {};
+let favourites = {};
+let extraPhotos = {};
+let overrides = {};
+let hidden = {};  // { id: true } for built-in recipes the user has hidden
 try { userRecipes = JSON.parse(localStorage.getItem('userRecipes') || '[]'); } catch(e){}
 try { ratings = JSON.parse(localStorage.getItem('ratings') || '{}'); } catch(e){}
 try { favourites = JSON.parse(localStorage.getItem('favourites') || '{}'); } catch(e){}
 try { extraPhotos = JSON.parse(localStorage.getItem('extraPhotos') || '{}'); } catch(e){}
 try { overrides = JSON.parse(localStorage.getItem('overrides') || '{}'); } catch(e){}
+try { hidden = JSON.parse(localStorage.getItem('hidden') || '{}'); } catch(e){}
 
 const all = () => [...BUILTIN.map(r => {
   const ov = overrides[r.id];
   return ov ? { ...r, ...ov } : r;
-}), ...userRecipes];
+}).filter(r => !r._deleted), ...userRecipes];
 const saveAll = () => {
   localStorage.setItem('userRecipes', JSON.stringify(userRecipes));
   localStorage.setItem('ratings', JSON.stringify(ratings));
   localStorage.setItem('favourites', JSON.stringify(favourites));
   localStorage.setItem('extraPhotos', JSON.stringify(extraPhotos));
   localStorage.setItem('overrides', JSON.stringify(overrides));
+  localStorage.setItem('hidden', JSON.stringify(hidden));
 };
 
 // ── Import state ──────────────────────────
@@ -580,6 +590,7 @@ function getPhoto(r){
 function renderGrid(){
   const grid = document.getElementById('recipeGrid');
   let list = all().filter(r=>{
+    if (hidden[r.id]) return false;
     if (curFilter==='Favourites') return !!favourites[r.id];
     const mf = curFilter==='All' || r.tags.some(t=>t.toLowerCase().includes(curFilter.toLowerCase()));
     const ms = !curSearch || r.title.toLowerCase().includes(curSearch) || r.tags.some(t=>t.toLowerCase().includes(curSearch)) || (r.description||'').toLowerCase().includes(curSearch);
@@ -648,12 +659,10 @@ function showRecipe(id){
   // Fav
   const isFav = !!favourites[id];
 
-  // Action buttons
   const actions = !VIEW_ONLY ? `
     <div class="detail-action-row">
       <button class="detail-action-btn" onclick="openEditModal(${id})">✏️ Edit</button>
       <button class="detail-action-btn" onclick="openShareForRecipe(${id})">📤 Export</button>
-      ${r.userAdded?`<button class="detail-action-btn danger" onclick="askDelete(${id})">🗑 Delete</button>`:''}
     </div>` : '';
 
   document.getElementById('detailHeader').innerHTML = `
@@ -712,14 +721,29 @@ function clearRating(id){
 
 function goHome(){ showScreen('homeScreen'); renderGrid(); }
 
-// ── DELETE ────────────────────────────────
+// ── HIDE (built-in) & DELETE (user-added) ─
+function askHide(id){
+  const r = all().find(x=>x.id===id); deleteId = id;
+  document.getElementById('deleteModalTitle').textContent = 'Hide this recipe?';
+  document.getElementById('deleteSubtitle').textContent = `"${r.title}" will be hidden from your collection. You can restore it any time from Settings.`;
+  document.getElementById('deleteConfirmBtn').textContent = 'Hide';
+  document.getElementById('deleteConfirmBtn').onclick = confirmHide;
+  openModal('deleteModal');
+}
+function confirmHide(){
+  hidden[deleteId] = true; saveAll();
+  closeModal('deleteModal'); showToast('Recipe hidden — restore it from the Share menu'); goHome();
+}
 function askDelete(id){
-  const r=all().find(x=>x.id===id); deleteId=id;
-  document.getElementById('deleteSubtitle').textContent=`"${r.title}" will be permanently removed.`;
+  const r = all().find(x=>x.id===id); deleteId = id;
+  document.getElementById('deleteModalTitle').textContent = 'Delete this recipe?';
+  document.getElementById('deleteSubtitle').textContent = `"${r.title}" will be permanently removed.`;
+  document.getElementById('deleteConfirmBtn').textContent = 'Delete';
+  document.getElementById('deleteConfirmBtn').onclick = confirmDelete;
   openModal('deleteModal');
 }
 function confirmDelete(){
-  userRecipes=userRecipes.filter(r=>r.id!==deleteId);
+  userRecipes = userRecipes.filter(r=>r.id!==deleteId);
   delete ratings[deleteId]; delete favourites[deleteId]; delete extraPhotos[deleteId];
   saveAll(); closeModal('deleteModal'); showToast('Recipe deleted'); goHome();
 }
@@ -734,8 +758,33 @@ function openShareModal(){
   const base = location.href.split('?')[0];
   document.getElementById('viewOnlyLink').value = base+'?view=1';
   const sel = document.getElementById('exportSelect');
-  sel.innerHTML = all().map(r=>`<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('');
+  sel.innerHTML = all().filter(r=>!hidden[r.id]).map(r=>`<option value="${r.id}">${r.emoji} ${r.title}</option>`).join('');
+
+  // Show hidden recipes if any
+  const hiddenIds = Object.keys(hidden).filter(id => hidden[id]);
+  const hiddenSection = document.getElementById('hiddenRecipesSection');
+  const hiddenList = document.getElementById('hiddenRecipesList');
+  if (hiddenIds.length) {
+    hiddenSection.style.display = 'block';
+    hiddenList.innerHTML = hiddenIds.map(id => {
+      const r = BUILTIN.find(x => x.id === parseInt(id));
+      if (!r) return '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;">
+        <span style="font-size:.88rem;">${r.emoji} ${r.title}</span>
+        <button class="btn btn-sm" onclick="unhideRecipe(${r.id})">Restore</button>
+      </div>`;
+    }).join('');
+  } else {
+    hiddenSection.style.display = 'none';
+  }
   openModal('shareModal');
+}
+
+function unhideRecipe(id){
+  delete hidden[id]; saveAll();
+  renderGrid();
+  openShareModal(); // refresh the modal
+  showToast('Recipe restored!');
 }
 function openShareForRecipe(id){
   openShareModal();
@@ -1074,6 +1123,32 @@ function collectSteps() {
     .map(el => el.value.trim()).filter(Boolean);
 }
 
+function askDeleteFromEdit(){
+  closeModal('editModal');
+  const r = all().find(x => x.id === editingId);
+  const isBuiltin = BUILTIN.some(x => x.id === editingId);
+  document.getElementById('deleteModalTitle').textContent = 'Delete this recipe?';
+  document.getElementById('deleteSubtitle').textContent = isBuiltin
+    ? `"${r.title}" will be permanently deleted from your collection.`
+    : `"${r.title}" will be permanently removed.`;
+  document.getElementById('deleteConfirmBtn').textContent = 'Delete';
+  document.getElementById('deleteConfirmBtn').onclick = () => confirmDeleteById(editingId);
+  deleteId = editingId;
+  openModal('deleteModal');
+}
+
+function confirmDeleteById(id){
+  const isBuiltin = BUILTIN.some(x => x.id === id);
+  if (isBuiltin) {
+    // Mark as deleted in overrides so it never reappears
+    overrides[id] = { ...( overrides[id] || {}), _deleted: true };
+  } else {
+    userRecipes = userRecipes.filter(r => r.id !== id);
+  }
+  delete ratings[id]; delete favourites[id]; delete extraPhotos[id]; delete hidden[id];
+  saveAll(); closeModal('deleteModal'); showToast('Recipe deleted'); goHome();
+}
+
 function saveEdit() {
   const title = document.getElementById('editTitle').value.trim();
   if (!title) { showToast('Please add a title'); return; }
@@ -1139,7 +1214,8 @@ function backupData() {
     userRecipes,
     ratings,
     favourites,
-    overrides
+    overrides,
+    hidden
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1162,6 +1238,7 @@ function restoreData(input) {
       if (data.ratings) Object.assign(ratings, data.ratings);
       if (data.favourites) Object.assign(favourites, data.favourites);
       if (data.overrides) Object.assign(overrides, data.overrides);
+      if (data.hidden) Object.assign(hidden, data.hidden);
       saveAll();
       renderGrid();
       closeModal('shareModal');
