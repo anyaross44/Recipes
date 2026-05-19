@@ -298,8 +298,8 @@ body{padding-bottom:64px;}
     Recipes
   </button>
   <button class="nav-btn" id="nav-planner" onclick="switchTab('planner')">
-    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" stroke-width="2.5"/><line x1="12" y1="14" x2="12" y2="14" stroke-width="2.5"/><line x1="16" y1="14" x2="16" y2="14" stroke-width="2.5"/><line x1="8" y1="18" x2="8" y2="18" stroke-width="2.5"/><line x1="12" y1="18" x2="12" y2="18" stroke-width="2.5"/></svg>
-    Plan
+    <svg viewBox="0 0 24 24"><line x1="8" y1="3" x2="8" y2="10"/><path d="M8 10c0 2 2 3 2 5v6"/><line x1="6" y1="3" x2="6" y2="7"/><line x1="10" y1="3" x2="10" y2="7"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="16" y1="3" x2="16" y2="21"/><path d="M13 3c0 4 3 5 3 8"/></svg>
+    Menu
   </button>
   <button class="nav-btn" id="nav-shopping" onclick="switchTab('shopping')">
     <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -322,7 +322,10 @@ body{padding-bottom:64px;}
     <div>
       <h2>Shopping List</h2>
     </div>
-    <button class="btn btn-sm" onclick="clearCheckedItems()" style="margin-bottom:4px;">✓ Clear done</button>
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:4px;">
+      <button class="btn btn-sm" onclick="shareShoppingList()" style="gap:5px;">📤 Share</button>
+      <button class="btn btn-sm" onclick="clearCheckedItems()">✓ Clear done</button>
+    </div>
   </div>
   <div class="shopping-body">
     <div class="shop-section-title">Add item</div>
@@ -731,21 +734,21 @@ function renderGrid(){
   const grid = document.getElementById('recipeGrid');
   let list = all().filter(r=>{
     if (hidden[r.id]) return false;
-    if (curFilter==='Favourites') return !!favourites[r.id];
+    if (curFilter==='Favourites') return !!favourites[String(r.id)];
     const mf = curFilter==='All' || r.tags.some(t=>t.toLowerCase().includes(curFilter.toLowerCase()));
     const ms = !curSearch || r.title.toLowerCase().includes(curSearch) || r.tags.some(t=>t.toLowerCase().includes(curSearch)) || (r.description||'').toLowerCase().includes(curSearch);
     return mf && ms;
   });
   // sort: favourites first within any view, then rated
   list.sort((a,b)=>{
-    const fa=favourites[a.id]?1:0, fb=favourites[b.id]?1:0;
+    const fa=favourites[String(a.id)]?1:0, fb=favourites[String(b.id)]?1:0;
     if (fb!==fa) return fb-fa;
     return (ratings[b.id]||0)-(ratings[a.id]||0);
   });
   if (!list.length){ grid.innerHTML='<div class="no-results">No recipes found.</div>'; return; }
   grid.innerHTML = list.map(r=>{
     const photo = getPhoto(r);
-    const fav = favourites[r.id];
+    const fav = favourites[String(r.id)];
     const rating = ratings[r.id]||0;
     const starsHtml = rating>0 ? `<span class="card-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</span>` : '';
     const imgHtml = photo
@@ -770,8 +773,9 @@ function renderGrid(){
 
 function toggleFav(e, id){
   e.stopPropagation();
-  favourites[id] = !favourites[id];
-  if (!favourites[id]) delete favourites[id];
+  const k = String(id);
+  favourites[k] = !favourites[k];
+  if (!favourites[k]) delete favourites[k];
   saveAll(); renderGrid();
 }
 
@@ -797,7 +801,7 @@ function showRecipe(id){
   const starsHtml = [1,2,3,4,5].map(n=>`<button class="star-btn${n<=curRating?' lit':''}" onclick="setRating(${id},${n})" id="star_${id}_${n}">★</button>`).join('');
 
   // Fav
-  const isFav = !!favourites[id];
+  const isFav = !!favourites[String(id)];
 
   const actions = !VIEW_ONLY ? `
     <div class="detail-action-row">
@@ -843,10 +847,11 @@ function showRecipe(id){
 }
 
 function toggleFavDetail(id){
-  favourites[id] = !favourites[id];
-  if (!favourites[id]) delete favourites[id];
+  const k = String(id);
+  favourites[k] = !favourites[k];
+  if (!favourites[k]) delete favourites[k];
   saveAll();
-  document.getElementById('detailFavBtn').textContent = favourites[id]?'❤️':'🤍';
+  document.getElementById('detailFavBtn').textContent = favourites[k]?'❤️':'🤍';
 }
 
 function setRating(id, n){
@@ -865,7 +870,7 @@ function clearRating(id){
   const clr=document.getElementById(`ratingClear_${id}`); if(clr) clr.style.display='none';
 }
 
-function goHome(){ showScreen('homeScreen'); renderGrid(); }
+// goHome defined later in tab navigation section
 
 // ── HIDE (built-in) & DELETE (user-added) ─
 function askHide(id){
@@ -1355,19 +1360,16 @@ function saveEdit() {
 // ── BACKUP & RESTORE ──────────────────────
 function backupData() {
   const data = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    userRecipes,
-    ratings,
-    favourites,
-    overrides,
-    hidden
+    userRecipes, ratings, favourites, overrides, hidden,
+    weekPlan, shopList, translationCache
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `annas-recipes-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `annas-kitchen-backup-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('Backup downloaded!');
@@ -1385,6 +1387,9 @@ function restoreData(input) {
       if (data.favourites) Object.assign(favourites, data.favourites);
       if (data.overrides) Object.assign(overrides, data.overrides);
       if (data.hidden) Object.assign(hidden, data.hidden);
+      if (data.weekPlan) Object.assign(weekPlan, data.weekPlan);
+      if (data.shopList) shopList = data.shopList;
+      if (data.translationCache) Object.assign(translationCache, data.translationCache);
       saveAll();
       renderGrid();
       closeModal('shareModal');
@@ -1461,7 +1466,9 @@ function renderPlanner() {
     const meals = weekPlan[ds] || [];
     const mealsHtml = meals.map((m,mi) => `
       <div class="meal-chip${m.recipeId?' recipe-meal':''}">
-        <span class="meal-chip-name">${m.recipeId ? (all().find(r=>r.id===m.recipeId)||{}).emoji||'🍽' : ''} ${m.name}</span>
+        <span class="meal-chip-name"${m.recipeId?` onclick="openRecipeFromPlan(${m.recipeId})" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--taupe);" title="Open recipe"`:''}>
+          ${m.recipeId ? (all().find(r=>r.id===m.recipeId)||{}).emoji||'🍽' : ''} ${m.name}
+        </span>
         <button class="meal-chip-remove" onclick="removeMeal('${ds}',${mi})">×</button>
       </div>`).join('');
 
@@ -1527,7 +1534,17 @@ function pickRecipe(recipeId) {
   renderShoppingIngredients(); // refresh shopping too
 }
 
-// ── SHOPPING LIST ─────────────────────────
+function openRecipeFromPlan(recipeId) {
+  showRecipe(recipeId);
+  // Override back button to return to Menu tab
+  const backBtn = document.querySelector('.back-btn');
+  if (backBtn) {
+    backBtn.textContent = '← Menu';
+    backBtn.onclick = () => switchTab('planner');
+  }
+}
+
+
 const FREQUENT_ITEMS = [
   'Eggs','Milk','Butter','Olive oil','Oats','Bananas','Lemons','Garlic',
   'Onions','Spinach','Greek yogurt','Chicken','Salmon','Avocado',
@@ -1567,6 +1584,33 @@ function addShopItem() {
   if (shopList.some(i=>i.name.toLowerCase()===name.toLowerCase())) { input.value=''; return; }
   shopList.push({id: Date.now()+Math.random(), name, checked:false, source:'manual'});
   saveShop(); input.value=''; renderShopping();
+}
+
+function shareShoppingList() {
+  if (!shopList.length) { showToast('Your list is empty'); return; }
+
+  // Build text
+  const unchecked = shopList.filter(i => !i.checked);
+  const checked = shopList.filter(i => i.checked);
+  const lines = ['🛒 Shopping List\n'];
+  unchecked.forEach(i => lines.push(`☐ ${i.name}`));
+  if (checked.length) { lines.push('\nAlready got:'); checked.forEach(i => lines.push(`✓ ${i.name}`)); }
+  const text = lines.join('\n');
+
+  // Try native share (works great on iPhone)
+  if (navigator.share) {
+    navigator.share({ title: "Shopping List", text }).catch(() => {});
+    return;
+  }
+  // Fallback: copy + offer WhatsApp
+  try { navigator.clipboard.writeText(text); } catch(e) {
+    const ta = document.createElement('textarea'); ta.value = text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  // Open WhatsApp share
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(waUrl, '_blank');
+  showToast('List copied & WhatsApp opened!');
 }
 
 function renderShoppingIngredients() {
@@ -1710,22 +1754,6 @@ function applyLangToDetail(r) {
   if (noteEl && r.note) noteEl.innerHTML = `<strong>✳ Note:</strong> ${r.note}`;
 }
 
-// Include shopList and translationCache in backup/restore
-const _origBackup = backupData;
-function backupData() {
-  const data = {
-    version: 2,
-    exportedAt: new Date().toISOString(),
-    userRecipes, ratings, favourites, overrides, hidden,
-    weekPlan, shopList, translationCache
-  };
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=`annas-kitchen-backup-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  showToast('Backup downloaded!');
-}
 
 
 </script>
