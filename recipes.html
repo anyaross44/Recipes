@@ -298,7 +298,7 @@ body{padding-bottom:64px;}
     Recipes
   </button>
   <button class="nav-btn" id="nav-planner" onclick="switchTab('planner')">
-    <svg viewBox="0 0 24 24"><line x1="8" y1="3" x2="8" y2="10"/><path d="M8 10c0 2 2 3 2 5v6"/><line x1="6" y1="3" x2="6" y2="7"/><line x1="10" y1="3" x2="10" y2="7"/><line x1="6" y1="7" x2="10" y2="7"/><line x1="16" y1="3" x2="16" y2="21"/><path d="M13 3c0 4 3 5 3 8"/></svg>
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" ry="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="14" x2="8.01" y2="14" stroke-width="2"/><line x1="12" y1="14" x2="12.01" y2="14" stroke-width="2"/><line x1="16" y1="14" x2="16.01" y2="14" stroke-width="2"/><line x1="8" y1="18" x2="8.01" y2="18" stroke-width="2"/><line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2"/></svg>
     Menu
   </button>
   <button class="nav-btn" id="nav-shopping" onclick="switchTab('shopping')">
@@ -1067,7 +1067,7 @@ Translate everything to English. Return ONLY valid JSON.`}
     const res = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages})
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1200,messages})
     });
     const data = await res.json();
     let text = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
@@ -1718,22 +1718,29 @@ async function setLang(id, lang) {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1200,
-        messages:[{role:'user',content:`Translate this recipe to Russian. Return ONLY valid JSON with the same structure:
-{"title":"...","description":"...","ingredients":["..."],"steps":["..."],"note":"..." or null}
-Recipe: ${JSON.stringify({title:r.title,description:r.description,ingredients:r.ingredients,steps:r.steps,note:r.note})}`}]
+        model:'claude-sonnet-4-5',
+        max_tokens:1500,
+        messages:[{role:'user',content:`Translate this recipe to Russian. Return ONLY valid JSON, no markdown, no explanation:
+{"title":"Russian title","description":"Russian description or null","ingredients":["ingredient 1","ingredient 2"],"steps":["step 1","step 2"],"note":"Russian note or null"}
+Original recipe JSON: ${JSON.stringify({title:r.title,description:r.description||null,ingredients:r.ingredients,steps:r.steps,note:r.note||null})}`}]
       })
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    if (!data.content) throw new Error('No content in response');
     let text = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
     const match = text.match(/\{[\s\S]*\}/); if (match) text = match[0];
     const translated = JSON.parse(text);
+    if (!translated.title) throw new Error('Invalid translation response');
     translationCache[cacheKey] = {...r, ...translated};
     saveTranslations();
     applyLangToDetail(translationCache[cacheKey]);
   } catch(e) {
-    showToast('Translation failed — try again'); applyLangToDetail(r);
+    console.error('Translation error:', e);
+    showToast('Translation failed — try again');
+    applyLangToDetail(r);
+    document.getElementById(`langEN_${id}`).classList.add('active');
+    document.getElementById(`langRU_${id}`).classList.remove('active');
   }
 }
 
