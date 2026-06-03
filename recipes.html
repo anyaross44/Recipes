@@ -178,9 +178,9 @@ textarea{min-height:130px;}
 .fab:hover{background:var(--taupe-dark);transform:scale(1.06);}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--taupe-dark);color:#fff;padding:11px 36px 11px 20px;border-radius:40px;font-size:.83rem;z-index:200;transition:transform .3s;white-space:nowrap;pointer-events:auto;max-width:90vw;overflow:hidden;text-overflow:ellipsis;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(140px);background:var(--taupe-dark);color:#fff;padding:12px 44px 12px 18px;border-radius:14px;font-size:.83rem;z-index:9999;transition:transform .35s ease;max-width:88vw;line-height:1.4;pointer-events:auto;box-shadow:0 4px 20px rgba(0,0,0,.25);}
 .toast.show{transform:translateX(-50%) translateY(0);}
-.toast-close{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.7);font-size:1rem;cursor:pointer;line-height:1;padding:0;}
+.toast-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:none;color:#fff;font-size:.9rem;cursor:pointer;line-height:1;padding:3px 6px;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
 
 /* ── EDIT MODAL ── */
 .edit-row{display:flex;gap:10px;align-items:flex-start;}
@@ -1310,25 +1310,24 @@ Translate everything to English. Return ONLY valid JSON.`}
       body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:2000, messages})
     });
     const data = await res.json();
+    console.log('API status:', res.status);
+    console.log('API response:', JSON.stringify(data).slice(0,500));
     if (!res.ok) {
       throw new Error(data?.error?.message || `API error ${res.status}: ${JSON.stringify(data)}`);
     }
-    if (!data.content?.length) throw new Error('No content returned: ' + JSON.stringify(data));
+    if (!data.content?.length) throw new Error('No content: ' + JSON.stringify(data));
     let text = data.content.map(c=>c.text||'').join('').trim();
-    // Strip any markdown code fences
+    console.log('Raw text from AI:', text.slice(0,300));
     text = text.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim();
-    // Extract just the JSON object if wrapped in prose
     const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI did not return JSON. Got: ' + text.slice(0,200));
+    if (!match) throw new Error('No JSON found in: ' + text.slice(0,150));
     try {
       pendingImport = JSON.parse(match[0]);
     } catch(parseErr) {
-      throw new Error('JSON truncated — try a shorter recipe or paste less text. Raw: ' + match[0].slice(-100));
+      throw new Error('Truncated JSON — try pasting less text at once');
     }
     if (!pendingImport.title) throw new Error('Missing title in response');
-    // attach photo from photo tab
     if (importTab==='photo' && photoDataImport) pendingImport._photo = photoDataImport;
-    // attach extra dish photo
     if (photoDataExtra) pendingImport._photo = photoDataExtra;
     showAIPreview(pendingImport);
   } catch(e){
