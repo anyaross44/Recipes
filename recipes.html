@@ -178,8 +178,9 @@ textarea{min-height:130px;}
 .fab:hover{background:var(--taupe-dark);transform:scale(1.06);}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--taupe-dark);color:#fff;padding:11px 20px;border-radius:40px;font-size:.83rem;z-index:200;transition:transform .3s;white-space:nowrap;pointer-events:none;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--taupe-dark);color:#fff;padding:11px 36px 11px 20px;border-radius:40px;font-size:.83rem;z-index:200;transition:transform .3s;white-space:nowrap;pointer-events:auto;max-width:90vw;overflow:hidden;text-overflow:ellipsis;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+.toast-close{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.7);font-size:1rem;cursor:pointer;line-height:1;padding:0;}
 
 /* ── EDIT MODAL ── */
 .edit-row{display:flex;gap:10px;align-items:flex-start;}
@@ -308,7 +309,7 @@ body{padding-bottom:64px;}
 <body>
 
 <div id="printArea" style="display:none"></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"><span id="toastMsg"></span><button class="toast-close" onclick="hideToast()">×</button></div>
 <div class="view-only-banner" id="viewBanner" style="display:none">👁 View-only mode — Anna's Kitchen</div>
 
 <!-- ══ AUTH SCREEN ══ -->
@@ -1306,7 +1307,7 @@ Translate everything to English. Return ONLY valid JSON.`}
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({model:'claude-opus-4-5', max_tokens:1200, messages})
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:1200, messages})
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1647,8 +1648,13 @@ function restoreData(input) {
 
 let toastT;
 function showToast(msg){
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600);
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toast').classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(hideToast, 5000);
+}
+function hideToast(){
+  document.getElementById('toast').classList.remove('show');
 }
 
 // ── TAB NAVIGATION ────────────────────────
