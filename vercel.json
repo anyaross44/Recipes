@@ -1,4 +1,10 @@
 {
+  "functions": {
+    "api/claude.js": {
+      "memory": 256,
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     { "source": "/api/claude", "destination": "/api/claude" },
     { "source": "/(.*)", "destination": "/recipes.html" }
