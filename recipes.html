@@ -382,20 +382,20 @@ body{padding-bottom:64px;}
     <div class="shop-section-title">Suggestions</div>
     <div class="suggestions-grid" id="suggestionsGrid"></div>
 
-    <div id="recipeIngredientsSection">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="shop-section-title" style="margin:0">From this week's meals</div>
-        <button class="btn btn-sm" onclick="addAllRecipeIngredients()" style="font-size:.72rem;">Add all</button>
-      </div>
-      <div id="recipeIngredientsList" style="margin-top:8px;"></div>
-    </div>
-
     <div id="myListSection">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
         <div class="shop-section-title" style="margin:0">My list</div>
         <button class="clear-checked-btn" onclick="clearCheckedItems()">Remove checked</button>
       </div>
       <div id="myShopList" style="margin-top:8px;"></div>
+    </div>
+
+    <div id="recipeIngredientsSection" style="margin-top:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:4px;">
+        <div class="shop-section-title" style="margin:0">From this week's menu</div>
+        <button class="btn btn-sm" onclick="addAllRecipeIngredients()" style="font-size:.72rem;">Add all</button>
+      </div>
+      <div id="recipeIngredientsList" style="margin-top:8px;"></div>
     </div>
   </div>
 </div>
@@ -1310,9 +1310,14 @@ Translate everything to English. Return ONLY valid JSON.`}
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
-      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1200,messages})
+      body:JSON.stringify({model:'claude-sonnet-4-5-20250514',max_tokens:1200,messages})
     });
     const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.error?.message || `API error ${res.status}`;
+      throw new Error(msg);
+    }
+    if (!data.content || !data.content.length) throw new Error('Empty response from AI');
     let text = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
     // extract JSON if wrapped in prose
     const match = text.match(/\{[\s\S]*\}/);
@@ -1324,10 +1329,10 @@ Translate everything to English. Return ONLY valid JSON.`}
     if (photoDataExtra) pendingImport._photo = photoDataExtra;
     showAIPreview(pendingImport);
   } catch(e){
-    console.error(e);
+    console.error('AI import error:', e);
     document.getElementById('importLoading').style.display='none';
     document.getElementById('importBtn').style.display='block';
-    showToast('Something went wrong — please try again');
+    showToast('Error: ' + (e.message || 'please try again'));
   }
 }
 
