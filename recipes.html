@@ -943,7 +943,7 @@ const BUILTIN = [
 let extraPhotos = {}; // kept for compatibility with getPhoto()
 
 const all = () => [...BUILTIN.map(r => {
-  const ov = overrides[r.id];
+  const ov = overrides[String(r.id)];
   return ov ? { ...r, ...ov } : r;
 }).filter(r => !r._deleted), ...userRecipes];
 
@@ -1263,9 +1263,9 @@ function resetImportResult(){
   pendingImport=null;
 }
 
-const RECIPE_PROMPT = (text) => `You are a recipe parser. Convert the following into clean structured JSON with EXACTLY these fields:
-{"emoji":"one relevant food emoji","title":"Recipe Name in English","time":"X MIN · SERVES Y","tags":["1-3 from: Breakfast,Lunch,Dinner,Snack,Sweet,Drink,BBQ,Healthy,Vegetarian,Gluten-free,High protein,Quick,Special,No bake"],"description":"1-2 warm appealing sentences in English","ingredients":["ingredient 1","ingredient 2"],"steps":["Step 1","Step 2"],"note":"storage/serving tip or null"}
-All text in English. ingredients and steps must be arrays. note is string or null. Return ONLY valid JSON, no markdown, no explanation.
+const RECIPE_PROMPT = (text) => `Output ONLY a single JSON object. No explanation, no markdown, no code fences. Start with { end with }.
+Fields: {"emoji":"food emoji","title":"English name","time":"X MIN · SERVES Y","tags":["1-3: Breakfast,Lunch,Dinner,Snack,Sweet,Drink,BBQ,Healthy,Vegetarian,Gluten-free,High protein,Quick,Special,No bake"],"description":"1-2 sentences","ingredients":["item"],"steps":["step"],"note":"tip or null"}
+Translate everything to English. Arrays of strings only.
 Recipe: ${text}`;
 
 async function runAIImport(){
@@ -1311,15 +1311,17 @@ Translate everything to English. Return ONLY valid JSON.`}
     });
     const data = await res.json();
     if (!res.ok) {
-      const msg = data?.error?.message || JSON.stringify(data);
-      throw new Error(msg);
+      throw new Error(data?.error?.message || `API error ${res.status}: ${JSON.stringify(data)}`);
     }
-    if (!data.content?.length) throw new Error('Empty response: ' + JSON.stringify(data));
-    let text = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
-    // extract JSON if wrapped in prose
+    if (!data.content?.length) throw new Error('No content returned: ' + JSON.stringify(data));
+    let text = data.content.map(c=>c.text||'').join('').trim();
+    // Strip any markdown code fences
+    text = text.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim();
+    // Extract just the JSON object if wrapped in prose
     const match = text.match(/\{[\s\S]*\}/);
-    if (match) text = match[0];
-    pendingImport = JSON.parse(text);
+    if (!match) throw new Error('AI did not return JSON. Got: ' + text.slice(0,200));
+    pendingImport = JSON.parse(match[0]);
+    if (!pendingImport.title) throw new Error('Missing title in response: ' + match[0].slice(0,200));
     // attach photo from photo tab
     if (importTab==='photo' && photoDataImport) pendingImport._photo = photoDataImport;
     // attach extra dish photo
@@ -1329,7 +1331,7 @@ Translate everything to English. Return ONLY valid JSON.`}
     console.error('AI import error:', e);
     document.getElementById('importLoading').style.display='none';
     document.getElementById('importBtn').style.display='block';
-    showToast('Error: ' + (e.message || 'please try again'));
+    showToast('Error: ' + (e.message||'unknown — check console'));
   }
 }
 
@@ -1536,12 +1538,11 @@ function askDeleteFromEdit(){
 function confirmDeleteById(id){
   const isBuiltin = BUILTIN.some(x => x.id === id);
   if (isBuiltin) {
-    // Mark as deleted in overrides so it never reappears
-    overrides[id] = { ...( overrides[id] || {}), _deleted: true };
+    overrides[String(id)] = { ...(overrides[String(id)] || {}), _deleted: true };
   } else {
     userRecipes = userRecipes.filter(r => r.id !== id);
   }
-  delete ratings[id]; delete favourites[id]; delete extraPhotos[id]; delete hidden[id];
+  delete ratings[String(id)]; delete favourites[String(id)]; delete hidden[String(id)];
   saveAll(); closeModal('deleteModal'); showToast('Recipe deleted'); goHome();
 }
 
