@@ -1307,7 +1307,7 @@ Translate everything to English. Return ONLY valid JSON.`}
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:1200, messages})
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:2000, messages})
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1320,8 +1320,12 @@ Translate everything to English. Return ONLY valid JSON.`}
     // Extract just the JSON object if wrapped in prose
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('AI did not return JSON. Got: ' + text.slice(0,200));
-    pendingImport = JSON.parse(match[0]);
-    if (!pendingImport.title) throw new Error('Missing title in response: ' + match[0].slice(0,200));
+    try {
+      pendingImport = JSON.parse(match[0]);
+    } catch(parseErr) {
+      throw new Error('JSON truncated — try a shorter recipe or paste less text. Raw: ' + match[0].slice(-100));
+    }
+    if (!pendingImport.title) throw new Error('Missing title in response');
     // attach photo from photo tab
     if (importTab==='photo' && photoDataImport) pendingImport._photo = photoDataImport;
     // attach extra dish photo
