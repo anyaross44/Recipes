@@ -1,5 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/recipes.html" }
+  "routes": [
+    { "src": "/api/claude", "dest": "/api/claude.js" },
+    { "src": "/(.*)", "dest": "/recipes.html" }
   ]
 }
